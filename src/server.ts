@@ -2,7 +2,7 @@ import app from "./app";
 import config from "./app/config";
 import { prisma } from "./app/lib/prisma";
 
-const PORT = config.port;
+const PORT = config.port;  
 
 const main = async () => {
     try {
