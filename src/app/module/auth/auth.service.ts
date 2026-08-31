@@ -165,7 +165,38 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 
   let user = isPatientExistWithGoogleAuth;
 
-  if (!user) {
+  if (!isPatientExistWithGoogleAuth) {
+    const isPatientExistWithCredential = await prisma.user.findUnique({
+      where: {
+        email: googleIdTokenPayload.email,
+        role: Role.PATIENT,
+        authProvider: AuthProvider.CREDENTIAL,
+      },
+    });
+
+    if (isPatientExistWithCredential) {
+      if (!isPatientExistWithCredential.emailVerified) {
+        throw new Error("User Email Not Varified");
+      }
+      if (isPatientExistWithCredential.status === UserStatus.BLOCKED) {
+        throw new Error("User Is Blocked");
+      }
+      if (
+        isPatientExistWithCredential.isDeleted ||
+        isPatientExistWithCredential.status === UserStatus.DELETED
+      ) {
+        throw new Error("User Is Deleted");
+      }
+      user = await prisma.user.update({
+        where: {
+          id: isPatientExistWithCredential.id,
+        },
+        data: {
+          googleId: googleIdTokenPayload.sub,
+        },
+      });
+    }
+  } else {
     user = await prisma.user.create({
       data: {
         name: googleIdTokenPayload.name,
@@ -173,15 +204,18 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
         role: Role.PATIENT,
         googleId: googleIdTokenPayload.sub,
         authProvider: AuthProvider.GOOGLE,
+        emailVerified: true,
         patient: {
           create: {
             name: googleIdTokenPayload.name,
             email: googleIdTokenPayload.email,
-		   
           },
         },
       },
     });
+  }
+  if (!user) {
+    throw new Error("User Not Found");
   }
 
   const jwtPayload = {
