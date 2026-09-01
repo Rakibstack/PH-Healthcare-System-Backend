@@ -113,40 +113,41 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
- const googleLogin = catchAsync	(async (req:Request,res: Response,next:NextFunction) => {
+const googleLogin = catchAsync(
+	async (req: Request, res: Response, next: NextFunction) => {
+		const payload = req.body;
+		const result = await AuthService.googleLogin(payload);
+		const { accessToken, refreshToken } = result;
 
-	const payload = req.body
-	const result = await AuthService.googleLogin(payload)
-	const { accessToken, refreshToken } = result;
+		res.cookie("accessToken", accessToken, {
+			httpOnly: true,
+			secure: false,
+			sameSite: "none",
+			maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
+		});
+		res.cookie("refreshToken", refreshToken, {
+			httpOnly: true,
+			secure: false,
+			sameSite: "none",
+			maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+		});
 
-	res.cookie("accessToken", accessToken, {
-		httpOnly: true,
-		secure: false,
-		sameSite: "none",
-		maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
-	});
-	res.cookie("refreshToken", refreshToken, {
-		httpOnly: true,
-		secure: false,
-		sameSite: "none",
-		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-	});
-
-	sendResponse(res,{
-		success: true,
-		statusCode: httpStatus.OK,
-		message : "Google Login Successfull",
-		data: {
-			accessToken,
-			refreshToken
-		}
-	})
- })
+		sendResponse(res, {
+			success: true,
+			statusCode: httpStatus.OK,
+			message: "Google Login Successfull",
+			data: {
+				accessToken,
+				refreshToken,
+			},
+		});
+	},
+);
 
 export const AuthController = {
 	registerPatient,
 	loginUser,
 	getMe,
 	refreshToken,
-	googleLogin
+	googleLogin,
 };
