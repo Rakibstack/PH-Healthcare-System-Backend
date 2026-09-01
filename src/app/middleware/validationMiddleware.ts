@@ -10,7 +10,6 @@ export const validationRequest = (zodSchema: z.ZodObject) => {
 
     const result = zodSchema.safeParse(payload);
     if (!result.success) {
-      console.log(result.error.issues);
       throw new Error(result.error.issues[0].message);
     }
 
