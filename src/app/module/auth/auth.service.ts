@@ -23,6 +23,7 @@ import type { TokenPayload } from "google-auth-library";
 // biome-ignore lint/style/useNodejsImportProtocol: <explanation>
 import crypto from "crypto";
 import { redisClient } from "../../lib/redis";
+import { transporter } from "../../lib/nodemailer";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, password } = payload;
@@ -331,7 +332,7 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
     throw new Error("User does not exists");
   }
   if (!isForgotUserExist.emailVerified) {
-    throw new Error("User Not Varified");
+    throw new Error("User Is Not Varified");
   }
 
   if (isForgotUserExist.status === "BLOCKED") {
@@ -356,6 +357,13 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
       value: 5 * 60,
     },
   });
+
+   await transporter.sendMail({
+       from: config.sender_email,
+       to: isForgotUserExist.email,
+       subject: 'Forgot Password',
+       text : `Your OTP Is : ${otp} `
+   })
 };
 const resetPassword = async (payload: IResetPasswordPayload) => {
   const { otp, newPassword,email } = payload;
@@ -370,7 +378,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
     throw new Error("User does not exists");
   }
   if (!isResetUserExist.emailVerified) {
-    throw new Error("User Not Varified");
+    throw new Error("User Is Not Varified");
   }
 
   if (isResetUserExist.status === "BLOCKED") {
