@@ -24,6 +24,8 @@ import type { TokenPayload } from "google-auth-library";
 import crypto from "crypto";
 import { redisClient } from "../../lib/redis";
 import { transporter } from "../../lib/nodemailer";
+import ejs from "ejs";
+import path from "path";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, password } = payload;
@@ -320,7 +322,7 @@ const refreshToken = async (token: string) => {
 };
 
 const forgotPassword = async (payload: IForgotPasswordPayload) => {
-   const {email} = payload
+  const { email } = payload;
 
   const isForgotUserExist = await prisma.user.findUnique({
     where: {
@@ -351,22 +353,34 @@ const forgotPassword = async (payload: IForgotPasswordPayload) => {
   const otp = crypto.randomInt(100000, 1000000).toString();
   const key = `forgot-password-otp:${isForgotUserExist.email}`;
 
+  const expiresInSecend = 5 * 60;
   await redisClient.set(key, otp, {
     expiration: {
       type: "EX",
-      value: 5 * 60,
+      value: expiresInSecend,
     },
   });
 
-   await transporter.sendMail({
-       from: config.sender_email,
-       to: isForgotUserExist.email,
-       subject: 'Forgot Password',
-       text : `Your OTP Is : ${otp} `
-   })
+  const templatePath = path.join(
+    process.cwd(),
+    "src/app/template/forgot-password.ejs",
+  );
+
+  const html = await ejs.renderFile(templatePath, {
+    name: isForgotUserExist.name,
+    otp,
+    expiresIn: expiresInSecend / 60,
+  });
+
+  await transporter.sendMail({
+    from: config.sender_email,
+    to: isForgotUserExist.email,
+    subject: "Forgot Password",
+    html,
+  });
 };
 const resetPassword = async (payload: IResetPasswordPayload) => {
-  const { otp, newPassword,email } = payload;
+  const { otp, newPassword, email } = payload;
 
   const isResetUserExist = await prisma.user.findUnique({
     where: {
@@ -411,6 +425,22 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
     data: {
       password: hashPassword,
     },
+  });
+
+   const templatePath = path.join(
+    process.cwd(),
+    "src/app/template/reset-password.ejs",
+  );
+
+  const html = await ejs.renderFile(templatePath, {
+    name: isResetUserExist.name,
+  });
+
+  await transporter.sendMail({
+    from: config.sender_email,
+    to: isResetUserExist.email,
+    subject: "Change Password",
+    html,
   });
 
   await redisClient.del(key);
