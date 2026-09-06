@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+```
+<title>Verify Your Email</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f9;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1f2937;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  .header {
+    background-color: #0f766e;
+    padding: 28px 30px;
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .header h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+
+  .content {
+    padding: 35px 30px;
+  }
+
+  .content h2 {
+    margin-top: 0;
+    font-size: 22px;
+  }
+
+  .message {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #4b5563;
+  }
+
+  .otp-box {
+    margin: 30px 0;
+    padding: 22px;
+    background-color: #f0fdfa;
+    border: 1px dashed #0f766e;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .otp-label {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .otp {
+    margin: 0;
+    font-size: 34px;
+    font-weight: bold;
+    letter-spacing: 8px;
+    color: #0f766e;
+  }
+
+  .expiry {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .security-box {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #fff7ed;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #9a3412;
+  }
+
+  .footer {
+    padding: 20px 30px;
+    background-color: #f9fafb;
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  @media (max-width: 600px) {
+    .container {
+      margin: 15px;
+    }
+
+    .content,
+    .header,
+    .footer {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .otp {
+      font-size: 28px;
+      letter-spacing: 6px;
+    }
+  }
+</style>
+```
+
+  </head>
+
+  <body>
+    <div class="container">
+
+```
+  <!-- Header -->
+  <div class="header">
+    <h1>PH Healthcare System</h1>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <h2>Welcome, <%= name %>!</h2>
+
+    <p class="message">
+      Thank you for creating your patient account with
+      PH Healthcare System.
+    </p>
+
+    <p class="message">
+      To complete your registration and activate your account,
+      please verify your email address using the OTP below.
+    </p>
+
+    <!-- OTP -->
+    <div class="otp-box">
+      <p class="otp-label">Your Verification Code</p>
+
+      <p class="otp">
+        <%= otpValue %>
+      </p>
+
+      <p class="expiry">
+        This OTP will expire in
+        <strong><%= expiresIn %></strong> minutes.
+      </p>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="security-box">
+      <strong>Security Notice:</strong>
+      Never share this verification code with anyone.
+      If you did not create an account with PH Healthcare System,
+      you can safely ignore this email.
+    </div>
+
+    <p class="message" style="margin-top: 30px;">
+      Once your email is verified, you will be able to access
+      your patient account and use our healthcare services.
+    </p>
+
+    <p style="margin-top: 30px;">
+      Regards,<br />
+      <strong>PH Healthcare System Team</strong>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>
+      This is an automated email. Please do not reply to this message.
+    </p>
+
+    <p>
+      © <%= new Date().getFullYear() %> PH Healthcare System.
+      All rights reserved.
+    </p>
+  </div>
+
+</div>
+```
+
+  </body>
+</html>
