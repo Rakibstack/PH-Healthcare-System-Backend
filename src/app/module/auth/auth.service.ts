@@ -29,7 +29,8 @@ import ejs from "ejs";
 import path from "path";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
-  const { name, password, email } = payload;
+  const { name, password } = payload;
+  const email = payload.email.trim().toLowerCase();
 
   const isUserExists = await prisma.user.findUnique({
     where: { email },
@@ -39,16 +40,16 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
     throw new Error("User with this email already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 8);
+  const hashedPassword = await bcrypt.hash(password,Number(config.bcrypt_salt_rounds));
 
-  const expiresInSecend = 5 * 60;
+  const expiresInSeconds = 5 * 60;
   const otpKey = `patient-register-otp:${email}`;
   const otpValue = crypto.randomInt(100000, 1000000).toString();
 
   await redisClient.set(otpKey, otpValue, {
     expiration: {
       type: "EX",
-      value: expiresInSecend,
+      value: expiresInSeconds,
     },
   });
 
@@ -68,7 +69,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
     {
       expiration: {
         type: "EX",
-        value: expiresInSecend,
+        value: expiresInSeconds,
       },
     },
   );
@@ -81,7 +82,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   const html = await ejs.renderFile(templatePath, {
     name: name,
     otpValue,
-    expiresIn: expiresInSecend / 60,
+    expiresIn: expiresInSeconds / 60,
   });
 
   await transporter.sendMail({
@@ -95,22 +96,6 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
 const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
   const email = payload.email.trim().toLowerCase();
   const otp = payload.otp;
-
-  const isUserExist = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (isUserExist?.emailVerified) {
-    throw new Error("already email verfied");
-  }
-  if (isUserExist?.status === "BLOCKED") {
-    throw new Error("User is Blocked");
-  }
-  if (isUserExist?.isDeleted || isUserExist?.status === "DELETED") {
-    throw new Error("User Is Deleted");
-  }
 
   const otpKey = `patient-register-otp:${email}`;
 
