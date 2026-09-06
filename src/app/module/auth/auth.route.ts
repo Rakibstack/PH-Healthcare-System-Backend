@@ -4,12 +4,13 @@ import { Role } from "../../../generated/prisma/enums";
 import { auth } from "../../middleware/checkAuth";
 import { AuthController } from "./auth.controller";
 import { validationRequest } from "../../middleware/validationMiddleware";
-import { forgotPasswordSchema, LoginUserSchema, registerUserSchema, resetPasswordSchema } from "./auth.validation";
+import { forgotPasswordSchema, LoginUserSchema, registerUserSchema, resetPasswordSchema, verifyEmailSchema } from "./auth.validation";
 
 const router = Router();
 
 
 router.post("/register",validationRequest(registerUserSchema) ,AuthController.registerPatient);
+router.post("/verify-email",validationRequest(verifyEmailSchema) ,AuthController.verifyPatientEmail);
 router.post("/login",validationRequest(LoginUserSchema) ,AuthController.loginUser);
 router.post("/google", AuthController.googleLogin);
 router.post("/forgot-password", validationRequest(forgotPasswordSchema),AuthController.forgotPassword);

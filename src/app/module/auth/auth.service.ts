@@ -17,6 +17,7 @@ import type {
   IRegisterPatientPayload,
   IRequestUser,
   IResetPasswordPayload,
+  IVerifyPatientEmailPayload,
 } from "./auth.interface";
 import { googleClient } from "../../lib/googleAuth";
 import type { TokenPayload } from "google-auth-library";
@@ -66,19 +67,19 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
     JSON.stringify(patientRegisterData),
     {
       expiration: {
-        type: 'EX',
-        value: expiresInSecend
-      }
+        type: "EX",
+        value: expiresInSecend,
+      },
     },
   );
 
-    const templatePath = path.join(
+  const templatePath = path.join(
     process.cwd(),
     "src/app/template/patientRegisterOTP.ejs",
   );
 
   const html = await ejs.renderFile(templatePath, {
-    name:name,
+    name: name,
     otpValue,
     expiresIn: expiresInSecend / 60,
   });
@@ -86,53 +87,94 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   await transporter.sendMail({
     from: config.sender_email,
     to: email,
-    subject: "Email Verification OTP",
+    subject: "Email Verification OTP Send.",
     html,
   });
+};
 
+const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
+  const email = payload.email.trim().toLowerCase();
+  const otp = payload.otp;
 
-  // const createdUser = await prisma.user.create({
-  //   data: {
-  //     name,
-  //     email,
-  //     password: hashedPassword,
-  //     role: Role.PATIENT,
-  //     status: UserStatus.ACTIVE,
-  //     emailVerified: false,
-  //     patient: {
-  //       create: { name, email },
-  //     },
-  //   },
-  //   omit: { password: true },
-  //   include: { patient: true },
-  // });
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
 
-  // const { patient, ...user } = createdUser;
-  // const jwtPayload = {
-  //   userId: user.id,
-  //   name: user.name,
-  //   email: user.email,
-  //   role: user.role,
-  // };
+  if (isUserExist?.emailVerified) {
+    throw new Error("already email verfied");
+  }
+  if (isUserExist?.status === "BLOCKED") {
+    throw new Error("User is Blocked");
+  }
+  if (isUserExist?.isDeleted || isUserExist?.status === "DELETED") {
+    throw new Error("User Is Deleted");
+  }
 
-  // const accessToken = jwtUtils.createToken(
-  //   jwtPayload,
-  //   config.jwt_access_secret,
-  //   config.jwt_access_expires_in as SignOptions,
-  // );
+  const otpKey = `patient-register-otp:${email}`;
 
-  // const refreshToken = jwtUtils.createToken(
-  //   jwtPayload,
-  //   config.jwt_refresh_secret,
-  //   config.jwt_refresh_expires_in as SignOptions,
-  // );
+  const redisOtp = await redisClient.get(otpKey);
+  if (!redisOtp) {
+    throw new Error("Invalid Otp");
+  }
+  if (redisOtp !== otp) {
+    throw new Error("Otp does not match");
+  }
+  await redisClient.del(otpKey);
 
-  // return {
-  //   user,
-  //   patient,
-  //   accessToken,
-  //   refreshToken,
-  // };
+  const patientRegisterkey = `patient-register-data:${email}`;
+  const redisPatientData = await redisClient.get(patientRegisterkey);
+  if (!redisPatientData) {
+    throw new Error("User Does Not Exists");
+  }
+  const patientPayload: IRegisterPatientPayload = JSON.parse(redisPatientData);
+
+  const createdUser = await prisma.user.create({
+    data: {
+      name: patientPayload.name,
+      email: patientPayload.email,
+      password: patientPayload.password,
+      role: Role.PATIENT,
+      status: UserStatus.ACTIVE,
+      emailVerified: true,
+      patient: {
+        create: {
+          name: patientPayload.name,
+          email: patientPayload.email,
+        },
+      },
+    },
+    omit: {password: true},
+    include: { patient: true },
+  });
+
+  const { patient, ...user } = createdUser;
+  const jwtPayload = {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
+
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
+
+  return {
+    user,
+    patient,
+    accessToken,
+    refreshToken,
+  };
 };
 
 const loginUser = async (payload: ILoginUserPayload) => {
@@ -499,6 +541,7 @@ const resetPassword = async (payload: IResetPasswordPayload) => {
 export const AuthService = {
   registerPatient,
   loginUser,
+  verifyPatientEmail,
   getMe,
   refreshToken,
   googleLogin,

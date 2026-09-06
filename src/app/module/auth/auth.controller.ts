@@ -9,26 +9,42 @@ const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   await AuthService.registerPatient(payload);
 
-  // const { accessToken, refreshToken, user, patient } = result;
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Patient registered successfully",
+    data: null,
+  });
+});
+const verifyPatientEmail = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await AuthService.verifyPatientEmail(payload);
 
-  // res.cookie("accessToken", accessToken, {
-  //   httpOnly: true,
-  //   secure: false,
-  //   sameSite: "none",
-  //   maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
-  // });
-  // res.cookie("refreshToken", refreshToken, {
-  //   httpOnly: true,
-  //   secure: false,
-  //   sameSite: "none",
-  //   maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-  // });
+  const { accessToken, refreshToken, user, patient } = result;
+
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  });
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
     message: "Patient registered successfully",
-    data:null
+    data:{
+      accessToken,
+      refreshToken,
+      user,
+      patient
+    }
   });
 });
 
@@ -141,13 +157,13 @@ const googleLogin = catchAsync(
 const forgotPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
-   await AuthService.forgotPassword(payload);
+    await AuthService.forgotPassword(payload);
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
-      message:`OTP Send To Email : ${payload.email}`,
-      data:null,
+      message: `OTP Send To Email : ${payload.email}`,
+      data: null,
     });
   },
 );
@@ -160,7 +176,7 @@ const resetPassword = catchAsync(
       success: true,
       statusCode: httpStatus.OK,
       message: "Password Change  Successfull",
-      data:null,
+      data: null,
     });
   },
 );
@@ -168,9 +184,10 @@ const resetPassword = catchAsync(
 export const AuthController = {
   registerPatient,
   loginUser,
+  verifyPatientEmail,
   getMe,
   refreshToken,
   googleLogin,
   forgotPassword,
-  resetPassword
+  resetPassword,
 };
