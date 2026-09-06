@@ -145,10 +145,27 @@ const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
         },
       },
     },
-    omit: {password: true},
+    omit: { password: true },
     include: { patient: true },
   });
 
+  await redisClient.del(patientRegisterkey);
+
+  const templatePath = path.join(
+    process.cwd(),
+    "src/app/template/PH-WellcomeEmail.ejs",
+  );
+
+  const html = await ejs.renderFile(templatePath, {
+    name: patientPayload.name,
+  });
+
+  await transporter.sendMail({
+    from: config.sender_email,
+    to: email,
+    subject: "Welcome to PH Healthcare System",
+    html,
+  });
   const { patient, ...user } = createdUser;
   const jwtPayload = {
     userId: user.id,
@@ -313,6 +330,21 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
           },
         },
       },
+    });
+    const templatePath = path.join(
+      process.cwd(),
+      "src/app/template/PH-WellcomeEmail.ejs",
+    );
+
+    const html = await ejs.renderFile(templatePath, {
+      name: googleIdTokenPayload.name,
+    });
+
+    await transporter.sendMail({
+      from: config.sender_email,
+      to: googleIdTokenPayload.email,
+      subject: "Welcome to PH Healthcare System",
+      html,
     });
   }
   if (!user) {
