@@ -1,30 +1,47 @@
+// biome-ignore lint/style/useImportType: <explanation>
+import { UploadApiResponse } from "cloudinary";
 import cloudinary from "../../lib/claudinary";
 import { prisma } from "../../lib/prisma";
 
-const updateUserProfile =  (buffer: Buffer, userId: string) => {
-  cloudinary.uploader
-    .upload_stream(
+const updateUserProfile = async (buffer: Buffer, userId: string) => {
+  const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
       {
         resource_type: "auto",
       },
-     async(error, result) => {
+      (error, result) => {
         if (error) {
-          console.log(error);
-          throw new Error(error.message);
+          reject(new Error(error.message));
+          return;
         }
-        console.log(result, "cloudinary result");
-        await prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-            imageUrl: result?.secure_url,
-            imagePublicId: result?.public_id
-            }
-        })
+
+        if (!result) {
+          reject(new Error("Cloudinary upload failed"));
+          return;
+        }
+
+        resolve(result);
       },
-    )
-    .end(buffer);
+    );
+
+    uploadStream.end(buffer)
+  });
+
+  // Cloudinary upload successfully completed
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      imageUrl: result.secure_url,
+      imagePublicId: result.public_id,
+    },
+    omit: {
+      password: true,
+    },
+  });
+
+  return updatedUser;
 };
 
 export const userService = {

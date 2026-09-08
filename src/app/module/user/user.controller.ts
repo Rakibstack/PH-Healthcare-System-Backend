@@ -11,12 +11,12 @@ const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
     throw new Error("File Not Found");
   }
   const userId = req.user?.userId as string
-  await userService.updateUserProfile(req.file?.buffer,userId);
+  const result = await userService.updateUserProfile(req.file?.buffer,userId);
   sendResponse(res, {
     success: true,
     statusCode: httpstatus.OK,
     message: "User Profile Update Successfully",
-    data: null,
+    data: result,
   });
 });
 
