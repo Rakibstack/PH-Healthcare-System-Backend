@@ -151,6 +151,7 @@ const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
     subject: "Welcome to PH Healthcare System",
     html,
   });
+  
   const { patient, ...user } = createdUser;
   const jwtPayload = {
     userId: user.id,

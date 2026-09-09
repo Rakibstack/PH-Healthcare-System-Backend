@@ -28,14 +28,12 @@ const updateUserProfile = async (buffer: Buffer, userId: string) => {
           reject(new Error("Cloudinary upload failed"));
           return;
         }
-
         resolve(result);
       },
     );
 
     uploadStream.end(buffer);
   });
-
   // Cloudinary upload successfully completed
   const updatedUser = await prisma.user.update({
     where: {
@@ -50,10 +48,9 @@ const updateUserProfile = async (buffer: Buffer, userId: string) => {
     },
   });
 
-  if(currentUser?.imagePublicId && currentUser.imagePublicId) {
+  if (currentUser?.imagePublicId && currentUser.imagePublicId) {
     await cloudinary.uploader.destroy(currentUser.imagePublicId);
   }
-
   return updatedUser;
 };
 
