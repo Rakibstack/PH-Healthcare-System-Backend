@@ -11,8 +11,8 @@ import config from "./app/config";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { AuthRoutes } from "./app/module/auth/auth.route";
+import { appointmentRoutes } from "./app/module/appointment/appointment.route";
 import { userRoutes } from "./app/module/user/user.route";
-import { getBkashIdToken } from "./app/lib/bkash";
 
 const app: Application = express();
 
@@ -32,6 +32,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/user",userRoutes);
+app.use("/api/v1/appointment", appointmentRoutes);
 
 // Basic route
 app.get("/", async (req: Request, res: Response) => {
@@ -39,16 +40,6 @@ app.get("/", async (req: Request, res: Response) => {
 	res.status(httpStatus.OK).json({
 		success: true,
 		message: "Welcome to PH Healthcare System Backend",
-	});
-});
-app.get("/test", async (req: Request, res: Response) => {
-
-	const result = await getBkashIdToken()
-	console.log(result,'result');
-	
-	res.status(httpStatus.OK).json({
-		success: true,
-		message: "Bkash Payment Test",
 	});
 });
 
