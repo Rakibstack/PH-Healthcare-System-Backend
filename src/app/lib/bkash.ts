@@ -42,14 +42,14 @@ export const getBkashIdToken = async () => {
       await redisClient.set(idTokenKey, bkashIdToken, {
         expiration: {
           type: "EX",
-          value: 60 * 60 * 24,
+          value: Number(refreshTokenResult.expires_in),
         },
       });
 
       return bkashIdToken;
     }
 
-    if (bkashIdTokenExpiration > 600) {
+    if (bkashIdToken && bkashIdTokenExpiration > 600) {
       return bkashIdToken;
     }
 
@@ -78,20 +78,19 @@ export const getBkashIdToken = async () => {
     await redisClient.set(idTokenKey, result.id_token, {
       expiration: {
         type: "EX",
-        value: 60 * 60,
+        value: Number(result.expires_in),
       },
     });
     // bkash refresh token set
     await redisClient.set(refreshTokeKey, result.refresh_token, {
       expiration: {
         type: "EX",
-        value: 60 * 60 * 24 * 28,
+        value: Number(result.refresh_expires_in),
       },
     });
     bkashIdToken = result.id_token;
     return bkashIdToken;
-    
-  } catch (error: any) {
-    throw new Error(error.message);
+  } catch (error) {
+    throw new Error(`Bkash Access Token Grant Failed: ${error}`);
   }
 };
