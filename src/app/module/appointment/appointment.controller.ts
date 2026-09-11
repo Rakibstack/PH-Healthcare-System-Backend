@@ -9,12 +9,34 @@ import { appointmentService } from "./appointment.service";
 const bookAppointment = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const user = req.user!;
-  const result = await appointmentService.bookAppointment(payload, user);
+  const {paymentURL} = await appointmentService.bookAppointment(payload, user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Appointment booked successfully",
-    data: result,
+    data: { paymentURL },
+  });
+});
+
+const payAppointment = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const user = req.user!;
+  const {paymentURL} = await appointmentService.payAppointment(payload, user);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Appointment payment initiated successfully",
+    data: { paymentURL },
+  });
+});
+const cancelAppointment = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const { appointment, payment } = await appointmentService.cancelAppointment(payload);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Appointment cancelled successfully",
+    data: { appointment, payment },
   });
 });
 
@@ -29,5 +51,7 @@ const bookAppointmentCallback = catchAsync(
 
 export const appointmentController = {
   bookAppointment,
+  payAppointment,
   bookAppointmentCallback,
+  cancelAppointment,
 };
