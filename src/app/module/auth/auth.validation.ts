@@ -29,7 +29,7 @@ export const verifyEmailSchema = z.object({
     .trim()
     .toLowerCase()
     .email("Please provide a valid email address"),
-    otp: z.string().length(6)
+    otp: z.string().length(6) 
 });
 export const resetPasswordSchema = z.object({
   email: z
