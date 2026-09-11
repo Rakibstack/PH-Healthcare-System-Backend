@@ -55,9 +55,69 @@ const bookAppointment = async (payload: any, user: requestUser) => {
         payerReference: user.email,
       },
     });
-    return createBkashPaymentResult.bkashURL;
+    return {
+      paymentURL: createBkashPaymentResult.bkashURL,
+    };
   });
   return transactionResult;
+};
+
+const payAppointment = async (payload: any, user: requestUser) => {
+  const appointmentId = payload.appointmentId;
+  const appointmentExist = await prisma.appointment.findUnique({
+    where: {
+      id: appointmentId,
+    },
+  });
+  if (!appointmentExist) {
+    throw new Error("Appointment dose not exist");
+  }
+  if (appointmentExist.status !== "PENDING") {
+    throw new Error("Appointment is not pending");
+  }
+
+  const bkashIdToken = await getBkashIdToken();
+  if (!bkashIdToken) {
+    throw new Error("Bkash Access Token Not Found.");
+  }
+
+  const createBkashPaymentResponse = await fetch(
+    `${config.bkash_base_url}/tokenized/checkout/create`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: bkashIdToken,
+        "X-App-Key": config.bkash_app_key,
+      },
+      body: JSON.stringify({
+        mode: "0011",
+        payerReference: user.email, // email or phone number
+        callbackURL: `${config.bkash_callback_url}/appointment/book-appointment/payment/callback`,
+        amount: "1200",
+        currency: "BDT",
+        intent: "sale",
+        merchantInvoiceNumber: appointmentExist.id,
+      }),
+    },
+  );
+
+  const createBkashPaymentResult = await createBkashPaymentResponse.json();
+  await prisma.payment.update({
+    where: {
+      id: appointmentExist.id,
+    },
+    data: {
+      merchantInvoiceNumber: createBkashPaymentResult.merchantInvoiceNumber,
+      gatewayResponse: createBkashPaymentResult,
+      bkashPaymentId: createBkashPaymentResult.paymentID,
+    },
+  });
+  
+  return {
+    paymentURL: createBkashPaymentResult.bkashURL,
+  };
 };
 
 const bookAppointmentCallback = async (query: Record<string, any>) => {
