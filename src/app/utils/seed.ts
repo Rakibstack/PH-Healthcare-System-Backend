@@ -54,7 +54,7 @@ export const seedTesterAdmin = async () => {
   try {
     const isTesterAdminExist = await prisma.user.findUnique({
       where: {
-        email : config.tester_admin_email,
+        email: config.tester_admin_email,
       },
     });
 
@@ -99,7 +99,7 @@ export const seedTesterDoctor = async () => {
   try {
     const isTesterDoctorExist = await prisma.user.findUnique({
       where: {
-        email : config.tester_doctor_email,
+        email: config.tester_doctor_email,
       },
     });
 
@@ -128,6 +128,16 @@ export const seedTesterDoctor = async () => {
         emailVerified: true,
         role: Role.DOCTOR,
         needPasswordChange: false,
+        doctor: {
+          create: {
+            name,
+            email,
+            specialization : 'Neurology',
+            experienceYears : 5,
+            licenseNumber : "DMCBC0000",
+            qualification : 'MBBS'
+          },
+        },
       },
     });
     console.log("tester doctor created : ", testerDoctor);

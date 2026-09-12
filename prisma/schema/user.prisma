@@ -7,7 +7,7 @@ model User {
   authProvider       AuthProvider @default(CREDENTIAL)
   emailVerified      Boolean      @default(false)
   role               Role         @default(PATIENT)
-  status             UserStatus   @default(ACTIVE)
+  status             UserStatus   @default(ACTIVE) 
   imageUrl           String       @default("")
   imagePublicId      String       @default("")
   needPasswordChange Boolean      @default(false)
@@ -16,6 +16,7 @@ model User {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
   patient            Patient?
+  doctor             Doctor?
 
   @@unique([email])
   @@map("users")
