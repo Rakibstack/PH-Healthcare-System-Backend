@@ -5,7 +5,6 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { doctorService } from "./doctor.service";
-import { applyAsDoctorZodSchema } from "./doctor.validation";
 
 const applyAsDoctor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -13,16 +12,10 @@ const applyAsDoctor = catchAsync(
     const resume = files["resume"]?.[0] || null;
     const additionalFile = files["additionalFile"] || [];
 
-    const validationResult = applyAsDoctorZodSchema.safeParse(
-      JSON.parse(req.body.data),
-    );
-    if (!validationResult.success) {
-      throw new Error(validationResult.error.issues[0].message);
-    }
-    1;
+    const payload =JSON.parse(req.body.data)
 
     const result = await doctorService.applyAsDoctor(
-      validationResult.data,
+      payload.data,
       resume,
       additionalFile,
     );
@@ -48,8 +41,39 @@ const verifyDoctorEmail = catchAsync(
     });
   },
 );
+const approveDoctor = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    const user  = req.user!
+    const result = await doctorService.approveDoctor(payload,user);
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Approve Doctor successfully",
+      data: result,
+    });
+  },
+);
+const getAllDoctor = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    
+    const result = await doctorService.getAllDoctor()
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Retrieved Doctors successfully",
+      data: result,
+    });
+  },
+);
+
+
 
 export const doctorController = {
   applyAsDoctor,
-  verifyDoctorEmail
+  verifyDoctorEmail,
+  approveDoctor,
+  getAllDoctor
 };

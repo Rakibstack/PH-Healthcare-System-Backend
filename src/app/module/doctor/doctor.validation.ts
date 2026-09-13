@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { DoctorVerificationStatus } from "../../../generated/prisma/enums";
 
 export const applyAsDoctorZodSchema = z.object({
   user: z.object({
@@ -60,6 +61,33 @@ export const applyAsDoctorZodSchema = z.object({
       .max(1000, "Bio must not exceed 1000 characters")
       .optional(),
   }),
+});
+
+export const verifyDoctorEmailSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Please provide a valid email address"),
+    otp: z.string().length(6) 
+});
+
+
+export const approveDoctorSchema = z.object({
+  doctorId: z
+    .string()
+    .trim()
+    .min(1, "Doctor ID is required"),
+
+  verificationStatus: z.enum(DoctorVerificationStatus, {
+    error: "Invalid verification status",
+  }),
+
+  rejectionReason: z
+    .string()
+    .trim()
+    .max(300, "Rejection reason must not exceed 300 characters")
+    .optional(),
 });
 
 
