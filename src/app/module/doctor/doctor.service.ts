@@ -20,6 +20,8 @@ import path from "path";
 import ejs from "ejs";
 import { transporter } from "../../lib/nodemailer";
 import { IRequestUser } from "../auth/auth.interface";
+import { IQuery } from "../../interface";
+import { DoctorWhereInput } from "../../../generated/prisma/models";
 
 const applyAsDoctor = async (
   payload: IApplyAsDoctorPayload,
@@ -270,9 +272,102 @@ const approveDoctor = async (
   return updateDoctor;
 };
 
-const getAllDoctor = async () => {
-  const allDoctors = await prisma.doctor.findMany({});
-  return allDoctors;
+const getAllDoctor = async (query: IQuery) => {
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+
+  const addConditions: DoctorWhereInput[] = [];
+
+  //searcing
+  if (query.searchTerm) {
+    addConditions.push({
+      OR: [
+        {
+          name: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          specialization: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          licenseNumber: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  //filtering
+  if (query.specialization) {
+    addConditions.push({
+      specialization: { equals: query.specialization, mode: "insensitive" },
+    });
+  }
+  if (query.email) {
+    addConditions.push({
+      email: { contains: query.email, mode: "insensitive" },
+    });
+  }
+  if (query.licenseNumber) {
+    addConditions.push({
+      licenseNumber: { equals: query.licenseNumber, mode: "insensitive" },
+    });
+  }
+  if (query.verificationStatus) {
+    addConditions.push({
+      verificationStatus: query.verificationStatus as DoctorVerificationStatus,
+    });
+  }
+
+  addConditions.push({
+    isDeleted: false,
+  });
+
+  const totalDoctor = await prisma.doctor.count({
+    where: {
+      AND: addConditions,
+    },
+  });
+  const allDoctors = await prisma.doctor.findMany({
+    where: {
+      AND: addConditions,
+    },
+    take: limit,
+    skip: skip,
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      user: {
+        omit: {
+          password: true,
+        },
+      },
+    },
+  });
+  return {
+    data : allDoctors,
+    meta : {
+      page: page,
+      limit: limit,
+      total: totalDoctor,
+      totalPages :Math.ceil(totalDoctor / limit)
+    }
+  };
 };
 
 export const doctorService = {

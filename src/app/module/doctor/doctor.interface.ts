@@ -27,3 +27,4 @@ export interface IApproveDoctorPayload {
   rejectionReason?: string;
 
 }
+
