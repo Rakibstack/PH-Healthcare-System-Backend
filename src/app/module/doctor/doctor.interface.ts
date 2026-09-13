@@ -1,4 +1,5 @@
-export interface IApplyAsDoctor {
+
+export interface IApplyAsDoctorPayload {
   user: {
     name: string;
     email: string;
@@ -13,3 +14,8 @@ export interface IApplyAsDoctor {
     experienceYears: number;
   };
 }
+
+ export interface IverifyDoctorEmail {
+   email : string,
+   otp : string
+ }
