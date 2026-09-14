@@ -1,16 +1,15 @@
 /** biome-ignore-all assist/source/organizeImports: <explanation> */
-import cron from "node-cron";
-import { prisma } from "./prisma";
 import { DoctorVerificationStatus, Role } from "../../generated/prisma/enums";
+import { prisma } from "./prisma";
+import cron from "node-cron"
 
-const deleteUnverifiedDoctor = () => {
+const cleanupDoctorApplications = async () => {
   cron.schedule("*/10 * * * *", async () => {
     try {
-      const oneHourAgo = new Date(
-        Date.now() - 60 * 60 * 1000,
-      );
+      //  Delete unverified pending doctors older than 1 hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-      const deletedDoctor = await prisma.user.deleteMany({
+      const deletedUnverifiedDoctor = await prisma.user.deleteMany({
         where: {
           role: Role.DOCTOR,
           emailVerified: false,
@@ -18,28 +17,41 @@ const deleteUnverifiedDoctor = () => {
             lt: oneHourAgo,
           },
           doctor: {
-            verificationStatus:
-              DoctorVerificationStatus.PENDING,
+            verificationStatus: DoctorVerificationStatus.PENDING,
           },
         },
       });
 
-      if (deletedDoctor.count > 0) {
+      // Delete rejected doctors older than 1 month
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const deletedRejectedDoctor = await prisma.user.deleteMany({
+        where: {
+          role: Role.DOCTOR,
+          doctor: {
+            verificationStatus: DoctorVerificationStatus.REJECTED,
+            rejectedAt: {
+              lt: oneMonthAgo,
+            },
+          },
+        },
+      });
+
+      if (
+        deletedUnverifiedDoctor.count > 0 ||
+        deletedRejectedDoctor.count > 0
+      ) {
         console.log(
-          `Cron: Deleted ${deletedDoctor.count} unverified doctor applications older than 1 hour`,
+          `Cron: Deleted ${deletedUnverifiedDoctor.count} unverified and ${deletedRejectedDoctor.count} rejected doctor applications`,
         );
       }
     } catch (error) {
-      console.error(
-        "Cron: Failed to delete unverified doctor applications",
-        error,
-      );
+      console.error("Cron: Doctor application cleanup failed", error);
     }
   });
 
-  console.log(
-    "Doctor delete cron scheduled to run every 10 minutes",
-  );
+  console.log("Doctor application cleanup cron scheduled every 10 minutes");
 };
 
-export default deleteUnverifiedDoctor;
+export default cleanupDoctorApplications;

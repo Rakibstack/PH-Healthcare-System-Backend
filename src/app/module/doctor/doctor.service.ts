@@ -255,6 +255,9 @@ const approveDoctor = async (
         verificationStatus === DoctorVerificationStatus.REJECTED
           ? rejectionReason
           : null,
+      rejectedAt:
+        verificationStatus === DoctorVerificationStatus.REJECTED ? new Date() : null,
+
       reviewedBy: reviewer.userId,
       reviewedAt: new Date(),
     },
