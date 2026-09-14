@@ -1,6 +1,8 @@
 /** biome-ignore-all lint/style/useImportType: <explanation> */
 /** biome-ignore-all assist/source/organizeImports: <explanation> */
 import { UploadApiResponse } from "cloudinary";
+import AppError from "../../utils/AppError";
+import httpstatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import {
   IApplyAsDoctorPayload,
@@ -33,8 +35,12 @@ const applyAsDoctor = async (
       email: payload.user.email,
     },
   });
+
   if (isUserExist) {
-    throw new Error("User Already Exist With This Email");
+    throw new AppError(
+      httpstatus.CONFLICT,
+      "User Already Exist With This Email",
+    );
   }
   const resumeUploadResult = await new Promise<UploadApiResponse>(
     (resolve, reject) => {
@@ -159,23 +165,27 @@ const verifyDoctorEmail = async (payload: IverifyDoctorEmail) => {
   });
 
   if (!existingUser) {
-    throw new Error("Doctor Application Not Found. Please Apply Again");
+    throw new AppError(
+      httpstatus.NOT_FOUND,
+      "Doctor Application Not Found. Please Apply Again",
+    );
   }
   if (existingUser.emailVerified) {
-    throw new Error("Email Already Varified");
+    throw new AppError(httpstatus.CONFLICT, "Email Already Varified");
   }
 
   const otpKey = `doctor-emailVerify-otp:${email}`;
   const redisOtp = await redisClient.get(otpKey);
 
   if (!redisOtp) {
-    throw new Error(
+    throw new AppError(
+      httpstatus.BAD_REQUEST,
       "OTP Expired. Your Application Window Has Closed. Please Apply Again",
     );
   }
 
   if (redisOtp !== otp) {
-    throw new Error("Otp Does Not Match");
+    throw new AppError(httpstatus.BAD_REQUEST, "Otp Does Not Match");
   }
 
   await redisClient.del(otpKey);
@@ -203,19 +213,24 @@ const approveDoctor = async (
     include: { user: true },
   });
   if (!existingDoctor) {
-    throw new Error("Doctor Application Not Found.");
+    throw new AppError(httpstatus.NOT_FOUND, "Doctor Application Not Found.");
   }
   if (existingDoctor.isDeleted) {
-    throw new Error("Doctor Application Has Been Deleted");
+    throw new AppError(
+      httpstatus.NOT_FOUND,
+      "Doctor Application Has Been Deleted",
+    );
   }
   if (!existingDoctor.user.emailVerified) {
-    throw new Error(
+    throw new AppError(
+      httpstatus.FORBIDDEN,
       "Doctor Has Not Verified Their Email Yet.Application Can Not Be reviewed ",
     );
   }
 
   if (existingDoctor.verificationStatus !== DoctorVerificationStatus.PENDING) {
-    throw new Error(
+    throw new AppError(
+      httpstatus.CONFLICT,
       `Doctor Application Has Already Been ${existingDoctor.verificationStatus.toLowerCase()}`,
     );
   }
@@ -224,7 +239,8 @@ const approveDoctor = async (
     verificationStatus === DoctorVerificationStatus.REJECTED &&
     !rejectionReason
   ) {
-    throw new Error(
+    throw new AppError(
+      httpstatus.BAD_REQUEST,
       "Rejection Reason Is Required When Rejecting A Doctor Application",
     );
   }
@@ -360,13 +376,13 @@ const getAllDoctor = async (query: IQuery) => {
     },
   });
   return {
-    data : allDoctors,
-    meta : {
+    data: allDoctors,
+    meta: {
       page: page,
       limit: limit,
       total: totalDoctor,
-      totalPages :Math.ceil(totalDoctor / limit)
-    }
+      totalPages: Math.ceil(totalDoctor / limit),
+    },
   };
 };
 

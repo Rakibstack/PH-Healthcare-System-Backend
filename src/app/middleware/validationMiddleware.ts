@@ -3,6 +3,8 @@
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../utils/catchAsync";
 import z from "zod";
+import AppError from "../utils/AppError";
+import httpstatus from "http-status";
 
 export const validationRequest = (zodSchema: z.ZodObject) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +12,7 @@ export const validationRequest = (zodSchema: z.ZodObject) => {
 
     const result = zodSchema.safeParse(payload);
     if (!result.success) {
-      throw new Error(result.error.issues[0].message);
+      throw new AppError(httpstatus.BAD_REQUEST, result.error.issues[0].message);
     }
 
     req.body = result.data

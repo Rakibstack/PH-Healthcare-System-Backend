@@ -2,6 +2,8 @@ import {
   AppointmentStatus,
   PaymentStatus,
 } from "../../../generated/prisma/enums";
+import AppError from "../../utils/AppError";
+import httpstatus from "http-status";
 import config from "../../config";
 import { getBkashIdToken } from "../../lib/bkash";
 import { prisma } from "../../lib/prisma";
@@ -18,7 +20,7 @@ const bookAppointment = async (payload: any, user: requestUser) => {
 
     const bkashIdToken = await getBkashIdToken();
     if (!bkashIdToken) {
-      throw new Error("Bkash Access Token Not Found.");
+      throw new AppError(httpstatus.BAD_REQUEST, "Bkash Access Token Not Found.");
     }
 
     const createBkashPaymentResponse = await fetch(
@@ -70,15 +72,15 @@ const payAppointment = async (payload: any, user: requestUser) => {
     },
   });
   if (!appointmentExist) {
-    throw new Error("Appointment dose not exist");
+    throw new AppError(httpstatus.NOT_FOUND, "Appointment dose not exist");
   }
   if (appointmentExist.status !== "PENDING") {
-    throw new Error("Appointment is not pending");
+      throw new AppError(httpstatus.CONFLICT, "Appointment is not pending");
   }
 
   const bkashIdToken = await getBkashIdToken();
   if (!bkashIdToken) {
-    throw new Error("Bkash Access Token Not Found.");
+    throw new AppError(httpstatus.BAD_REQUEST, "Bkash Access Token Not Found.");
   }
 
   const createBkashPaymentResponse = await fetch(
@@ -124,16 +126,16 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
   const transactionResult = await prisma.$transaction(async (tx) => {
     const paymentId = query.paymentID;
     if (!paymentId) {
-      throw new Error("payment is Not Found");
+      throw new AppError(httpstatus.NOT_FOUND, "payment is Not Found");
     }
     const status = query.status;
     if (!status) {
-      throw new Error("Status Is Missing");
+      throw new AppError(httpstatus.BAD_REQUEST, "Status Is Missing");
     }
 
     const bkashIdToken = await getBkashIdToken();
     if (!bkashIdToken) {
-      throw new Error("Bkash Access Token Not Found.");
+      throw new AppError(httpstatus.BAD_REQUEST, "Bkash Access Token Not Found.");
     }
 
     const executePaymentResponse = await fetch(
@@ -152,7 +154,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
       },
     );
     if (!executePaymentResponse.ok) {
-      throw new Error("Bkash Execute Payment Failed");
+      throw new AppError(httpstatus.INTERNAL_SERVER_ERROR, "Bkash Execute Payment Failed");
     }
     const executePaymentResult = await executePaymentResponse.json();
 
@@ -228,16 +230,16 @@ const cancelAppointment = async (payload: any) => {
       },
     });
     if (!appointmentExist) {
-      throw new Error("Appointment dose not exist");
+      throw new AppError(httpstatus.NOT_FOUND, "Appointment dose not exist");
     }
     if (
       appointmentExist.status === "ONGOING" ||
       appointmentExist.status === "COMPLETED"
     ) {
-      throw new Error("Appointment is Ongoing or Completed");
+      throw new AppError(httpstatus.CONFLICT, "Appointment is Ongoing or Completed");
     }
     if (appointmentExist.status === "CANCELLED") {
-      throw new Error("Appointment Already Cancelled");
+      throw new AppError(httpstatus.CONFLICT, "Appointment Already Cancelled");
     }
     const updateAppointment = await tx.appointment.update({
       where: {
@@ -250,7 +252,7 @@ const cancelAppointment = async (payload: any) => {
 
     const bkashIdToken = await getBkashIdToken();
     if (!bkashIdToken) {
-      throw new Error("Bkash Access Token Not Found.");
+      throw new AppError(httpstatus.BAD_REQUEST, "Bkash Access Token Not Found.");
     }
 
     const BkashRefundResponse = await fetch(

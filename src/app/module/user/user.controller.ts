@@ -4,11 +4,12 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import httpstatus from "http-status";
+import AppError from "../../utils/AppError";
 import { userService } from "./user.service";
 
 const updateUserProfile = catchAsync(async (req: Request, res: Response) => {
   if (!req.file) {
-    throw new Error("File Not Found");
+    throw new AppError(httpstatus.NOT_FOUND, "File Not Found");
   }
   const userId = req.user?.userId as string
   const result = await userService.updateUserProfile(req.file?.buffer,userId);
