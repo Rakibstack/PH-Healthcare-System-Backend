@@ -10,7 +10,10 @@ import {
 import { prisma } from "../../lib/prisma";
 import { requestUser } from "../../middleware/checkAuth";
 import AppError from "../../utils/AppError";
-import { ICreateSchedulePayload, IUpdateSchedulePayload } from "./schedule.interface";
+import {
+  ICreateSchedulePayload,
+  IUpdateSchedulePayload,
+} from "./schedule.interface";
 import httpStatus from "http-status";
 import { IQuery } from "../../interface";
 import { ScheduleWhereInput } from "../../../generated/prisma/models";
@@ -250,35 +253,33 @@ const getAllSchedules = async (query: IQuery) => {
   };
 };
 
-const getScheduleById = async (scheduleId : string) => {
-
-    const schedule = await prisma.schedule.findUnique({
-        where: { id: scheduleId },
-        include: {
-            doctor: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    specialization: true,
-                    userId: true,
-                },
-            },
-            appointments: {
-                include: {
-                    patient: true
-                },
-            }
+const getScheduleById = async (scheduleId: string) => {
+  const schedule = await prisma.schedule.findUnique({
+    where: { id: scheduleId },
+    include: {
+      doctor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          specialization: true,
+          userId: true,
         },
-    });
+      },
+      appointments: {
+        include: {
+          patient: true,
+        },
+      },
+    },
+  });
 
-    if(!schedule || schedule.isDeleted){
-        throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
-    }
+  if (!schedule || schedule.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
+  }
 
-    return schedule
-
-}
+  return schedule;
+};
 const updateSchedule = async (
   scheduleId: string,
   payload: IUpdateSchedulePayload,
@@ -292,10 +293,7 @@ const updateSchedule = async (
   });
 
   if (!doctor) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Doctor profile not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Doctor profile not found");
   }
 
   // 2. Find schedule owned by this doctor
@@ -307,15 +305,11 @@ const updateSchedule = async (
   });
 
   if (!schedule || schedule.isDeleted) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      "Schedule not found",
-    );
+    throw new AppError(httpStatus.NOT_FOUND, "Schedule not found");
   }
 
   // 3. Check whether any appointment has been booked
-  const hasBookedAppointment =
-    schedule.totalSlots !== schedule.availableSlots;
+  const hasBookedAppointment = schedule.totalSlots !== schedule.availableSlots;
 
   // 4. Published schedule + booked appointment
   //    → start/end time cannot be changed
@@ -331,14 +325,11 @@ const updateSchedule = async (
   }
 
   // 5. Prepare updated values without mutating payload
-  const startDateTime =
-    payload.startDateTime ?? schedule.startDateTime;
+  const startDateTime = payload.startDateTime ?? schedule.startDateTime;
 
-  const endDateTime =
-    payload.endDateTime ?? schedule.endDateTime;
+  const endDateTime = payload.endDateTime ?? schedule.endDateTime;
 
-  const meetingLink =
-    payload.meetingLink ?? schedule.meetingLink;
+  const meetingLink = payload.meetingLink ?? schedule.meetingLink;
 
   // 6. Published schedule date is locked
   if (
@@ -368,10 +359,7 @@ const updateSchedule = async (
   }
 
   // 9. Calculate duration
-  const durationInMinutes = differenceInMinutes(
-    endDateTime,
-    startDateTime,
-  );
+  const durationInMinutes = differenceInMinutes(endDateTime, startDateTime);
 
   const MIN_SCHEDULE_MINUTES = 3 * 60;
   const MAX_SCHEDULE_MINUTES = 8 * 60;
@@ -393,30 +381,27 @@ const updateSchedule = async (
   }
 
   // 11. Calculate total slots
-  const totalSlots = Math.floor(
-    durationInMinutes / MINUTES_PER_SLOT,
-  );
+  const totalSlots = Math.floor(durationInMinutes / MINUTES_PER_SLOT);
 
   // 12. Check another schedule on the same date
   const startOfTheDay = startOfDay(startDateTime);
   const startOfNextDay = addDays(startOfTheDay, 1);
 
-  const existingScheduleOnThisDate =
-    await prisma.schedule.findFirst({
-      where: {
-        doctorId: doctor.id,
-        isDeleted: false,
+  const existingScheduleOnThisDate = await prisma.schedule.findFirst({
+    where: {
+      doctorId: doctor.id,
+      isDeleted: false,
 
-        id: {
-          not: schedule.id,
-        },
-
-        startDateTime: {
-          gte: startOfTheDay,
-          lt: startOfNextDay,
-        },
+      id: {
+        not: schedule.id,
       },
-    });
+
+      startDateTime: {
+        gte: startOfTheDay,
+        lt: startOfNextDay,
+      },
+    },
+  });
 
   if (existingScheduleOnThisDate) {
     throw new AppError(
@@ -441,7 +426,7 @@ const updateSchedule = async (
     },
     include: {
       doctor: {
-        select: { 
+        select: {
           name: true,
           email: true,
           contactNumber: true,
@@ -452,64 +437,142 @@ const updateSchedule = async (
 
   return updatedSchedule;
 };
-const publishSchedule = async (scheduleId : string, user : requestUser) => {
-    const doctor = await prisma.doctor.findUnique({
-        where: { userId: user.userId },
-    });
+const publishSchedule = async (scheduleId: string, user: requestUser) => {
+  const doctor = await prisma.doctor.findUnique({
+    where: { userId: user.userId },
+  });
 
-    if (!doctor) {
-        throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
-    }
+  if (!doctor) {
+    throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
+  }
 
-    const schedule = await prisma.schedule.findUnique({
-        where: { id: scheduleId, doctorId : doctor.id },
-    });
+  const schedule = await prisma.schedule.findUnique({
+    where: { id: scheduleId, doctorId: doctor.id },
+  });
 
-    if (!schedule || schedule.isDeleted) {
-        throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
-    }
+  if (!schedule || schedule.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
+  }
 
-    if (schedule.status === ScheduleStatus.PUBLISHED) {
-        throw new AppError(httpStatus.CONFLICT, "Schedule Is Already Published");
-    }
+  if (schedule.status === ScheduleStatus.PUBLISHED) {
+    throw new AppError(httpStatus.CONFLICT, "Schedule Is Already Published");
+  }
 
-    const publishedSchedule = await prisma.schedule.update({
-        where: { id: schedule.id },
-        data: { status: ScheduleStatus.PUBLISHED },
-    });
+  const publishedSchedule = await prisma.schedule.update({
+    where: { id: schedule.id },
+    data: { status: ScheduleStatus.PUBLISHED },
+  });
 
-    return publishedSchedule;
-}
+  return publishedSchedule;
+};
 
 const deleteSchedule = async (scheduleId: string, user: requestUser) => {
-    const doctor = await prisma.doctor.findUnique({
-        where: { userId: user.userId },
-    });
+  const doctor = await prisma.doctor.findUnique({
+    where: { userId: user.userId },
+  });
 
-    if (!doctor) {
-        throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
-    }
+  if (!doctor) {
+    throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
+  }
 
-    const schedule = await prisma.schedule.findUnique({
-        where: { id: scheduleId, doctorId: doctor.id },
-    });
+  const schedule = await prisma.schedule.findUnique({
+    where: { id: scheduleId, doctorId: doctor.id },
+  });
 
-    if (!schedule || schedule.isDeleted) {
-        throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
-    }
+  if (!schedule || schedule.isDeleted) {
+    throw new AppError(httpStatus.NOT_FOUND, "Schedule Not Found");
+  }
 
-    if (schedule.status === ScheduleStatus.PUBLISHED && schedule.totalSlots !== schedule.availableSlots) {
-        throw new AppError(httpStatus.CONFLICT, "Schedule Once Published And Appoinement Booked Cannot Be Deleted");
-    };
+  if (
+    schedule.status === ScheduleStatus.PUBLISHED &&
+    schedule.totalSlots !== schedule.availableSlots
+  ) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "Schedule Once Published And Appoinement Booked Cannot Be Deleted",
+    );
+  }
 
-    const deletedSchedule = await prisma.schedule.update({
-        where: { id: schedule.id },
-        data: { isDeleted: true, deletedAt: new Date() },
-    });
+  const deletedSchedule = await prisma.schedule.update({
+    where: { id: schedule.id },
+    data: { isDeleted: true, deletedAt: new Date() },
+  });
 
-    return deletedSchedule;
-}
+  return deletedSchedule;
+};
+const getTodaysSchedules = async (query: IQuery) => {
+  if (!query.doctorId) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Doctor Id Must Be Provided In Query",
+    );
+  }
 
+  const doctor = await prisma.doctor.findUnique({
+    where: { id: query.doctorId },
+  });
+
+  if (!doctor) {
+    throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
+  }
+
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+  const skip = (page - 1) * limit;
+  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+  const now = new Date();
+  const startOfToday = startOfDay(now);
+  const startOfTomorrow = addDays(startOfToday, 1);
+
+  const andConditions: ScheduleWhereInput[] = [
+    {
+      doctorId: query.doctorId,
+    },
+    {
+      isDeleted: false,
+    },
+    {
+      status: ScheduleStatus.PUBLISHED,
+    },
+    {
+      startDateTime: {
+        gte: startOfToday,
+        lt: startOfTomorrow,
+        gt: now,
+      },
+    },
+    {
+      availableSlots: { gt: 0 },
+    },
+  ];
+
+  const schedules = await prisma.schedule.findMany({
+    where: {
+      AND: andConditions,
+    },
+
+    take: limit,
+    skip,
+    orderBy: {
+      // sortBy : sortOrder
+      [sortBy]: sortOrder,
+    },
+  });
+
+  const total = await prisma.schedule.count({ where: { AND: andConditions } });
+
+  return {
+    data: schedules,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 
 export const scheduleService = {
   createSchedule,
@@ -518,5 +581,5 @@ export const scheduleService = {
   getScheduleById,
   updateSchedule,
   deleteSchedule,
-  publishSchedule
+  publishSchedule,
 };
