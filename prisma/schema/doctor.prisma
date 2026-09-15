@@ -5,11 +5,13 @@ model Doctor {
     address String?
     contactNumber   String?
     bio String?
+    consultationFee Decimal? @db.Decimal(10,2)
 
     specialization String
     licenseNumber String  
     qualification  String
     experienceYears Int
+    
 
     verificationStatus DoctorVerificationStatus @default(PENDING)
     rejectionReason String?

@@ -582,4 +582,5 @@ export const scheduleService = {
   updateSchedule,
   deleteSchedule,
   publishSchedule,
+  getTodaysSchedules
 };
