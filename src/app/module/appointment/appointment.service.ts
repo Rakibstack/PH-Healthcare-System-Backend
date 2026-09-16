@@ -18,7 +18,7 @@ import {
   IPayAppointmentPayload,
 } from "./appointment.interface";
 import httpStatus from "http-status";
-import { isBefore, isSameDay } from "date-fns";
+import { addMinutes, isBefore, isSameDay } from "date-fns";
 
 const bookAppointment = async (
   payload: IBookAppointmentPayload,
@@ -177,14 +177,13 @@ const payAppointment = async (
   payload: IPayAppointmentPayload,
   user: requestUser,
 ) => {
+  const patient = await prisma.patient.findUnique({
+    where: { userId: user.userId },
+  });
 
-    const patient = await prisma.patient.findUnique({
-      where: { userId: user.userId },
-    });
-
-    if (!patient) {
-      throw new AppError(httpStatus.NOT_FOUND, "Patient Profile Not Found");
-    }
+  if (!patient) {
+    throw new AppError(httpStatus.NOT_FOUND, "Patient Profile Not Found");
+  }
 
   const appointmentExist = await prisma.apppointment.findUnique({
     where: {
@@ -205,7 +204,7 @@ const payAppointment = async (
     throw new AppError(httpstatus.CONFLICT, "Appointment is not pending");
   }
 
-  const amount = appointmentExist.schedule.doctor.consultationFee?.toString()
+  const amount = appointmentExist.schedule.doctor.consultationFee?.toString();
 
   const bkashIdToken = await getBkashIdToken();
   if (!bkashIdToken) {
@@ -294,14 +293,49 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
     const executePaymentResult = await executePaymentResponse.json();
 
     if (status === "success") {
-      await tx.appointment.update({
+      const appointment = await prisma.apppointment.findUnique({
+        where: {
+          id: executePaymentResult.merchantInvoiceNumber,
+        },
+        include: {
+          schedule: true,
+        },
+      });
+
+      if (!appointment) {
+        throw new AppError(httpStatus.NOT_FOUND, "Appointment Not Found.");
+      }
+
+      const alreadyBookedSlots =
+        appointment.schedule.totalSlots - appointment.schedule.availableSlots;
+      const serialNumber = alreadyBookedSlots + 1;
+
+      const joiningTime = addMinutes(
+        appointment.schedule.startDateTime,
+        (serialNumber - 1) * 20,
+      );
+
+      await tx.apppointment.update({
         where: {
           id: executePaymentResult.merchantInvoiceNumber,
         },
         data: {
           status: AppointmentStatus.CONFIRMED,
+          joiningTime,
+          serialNumber,
         },
       });
+      
+      const newAvailableSlots = appointment?.schedule.availableSlots - 1;
+      await tx.schedule.update({
+        where: {
+          id: appointment.schedule.id,
+        },
+        data: {
+          availableSlots: newAvailableSlots,
+        },
+      });
+
       await tx.payment.update({
         where: {
           appointmentId: executePaymentResult.merchantInvoiceNumber,

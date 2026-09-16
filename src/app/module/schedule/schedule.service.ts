@@ -76,16 +76,28 @@ const createSchedule = async (
     payload.endDateTime,
   );
 
-  const MINUTES_ALLOCATED_PER_SLOT = 20;
+ 
+  const MIN_SCHEDULE_MINUTES = 3 * 60;
+  const MAX_SCHEDULE_MINUTES = 8 * 60;
+  const MINUTES_PER_SLOT = 20;
 
-  const totalSlots = Math.floor(durationInMinutes / MINUTES_ALLOCATED_PER_SLOT);
-
-  if (totalSlots < 1) {
+  //  Schedule must be 3–8 hours
+  if (durationInMinutes < MIN_SCHEDULE_MINUTES) {
     throw new AppError(
       httpStatus.CONFLICT,
-      `Schedule Must Be At Least ${MINUTES_ALLOCATED_PER_SLOT} Minutes Long To Fit One Slot`,
+      "Schedule must be at least 3 hours long",
     );
   }
+
+  if (durationInMinutes > MAX_SCHEDULE_MINUTES) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "Schedule cannot be longer than 8 hours",
+    );
+  }
+
+  const totalSlots = Math.floor(durationInMinutes / MINUTES_PER_SLOT);
+
 
   const schedule = await prisma.schedule.create({
     data: {
