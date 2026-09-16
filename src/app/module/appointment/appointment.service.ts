@@ -18,12 +18,13 @@ import {
   IPayAppointmentPayload,
 } from "./appointment.interface";
 import httpStatus from "http-status";
-import { addMinutes, isBefore, isSameDay } from "date-fns";
+import { addMinutes, isBefore, isSameDay, subHours } from "date-fns";
 import { format } from "date-fns";
 import ejs from "ejs";
 import { transporter } from "../../lib/nodemailer";
 import path from "node:path";
 import PDFDocument from "pdfkit";
+import { IRequestUser } from "../auth/auth.interface";
 
 const bookAppointment = async (
   payload: IBookAppointmentPayload,
@@ -386,7 +387,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         meetingLink: appointment.schedule.meetingLink,
       });
 
-      const pdfDocument = new PDFDocument({ margin: 50, size: "A4" }); 
+      const pdfDocument = new PDFDocument({ margin: 50, size: "A4" });
       const pdfChunks: Buffer[] = [];
 
       pdfDocument.on("data", (chunk: Buffer) => {
@@ -399,9 +400,9 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         });
       });
 
-      const PRIMARY_COLOR = "#1A365D"; 
-      const SECONDARY_COLOR = "#4A5568"; 
-      const TEXT_COLOR = "#2D3748"; 
+      const PRIMARY_COLOR = "#1A365D";
+      const SECONDARY_COLOR = "#4A5568";
+      const TEXT_COLOR = "#2D3748";
       const BORDER_COLOR = "#E2E8F0";
 
       pdfDocument
@@ -461,11 +462,10 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         .text(`Date: ${appointment.schedule.startDateTime.toDateString()}`)
         .text(`Serial Number: ${serialNumber}`)
         .text(`Joining Time: ${joiningTime.toString()}`)
-        .fillColor("#3182CE") 
+        .fillColor("#3182CE")
         .text(`Meeting Link: ${appointment.schedule.meetingLink}`)
         .moveDown(1.5);
 
-      
       pdfDocument.rect(50, pdfDocument.y, 495, 20).fill(PRIMARY_COLOR);
 
       pdfDocument
@@ -474,7 +474,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         .text("Payment Description", 60, pdfDocument.y + 5)
         .text("Details", 320, pdfDocument.y - 10);
 
-      pdfDocument.y += 15; 
+      pdfDocument.y += 15;
 
       const paymentData = [
         { label: "Payment Method", value: "bKash" },
@@ -521,9 +521,8 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
 
       pdfDocument.end();
 
-    
       const pdfBuffer = await pdfReadyPromise;
-      
+
       await transporter.sendMail({
         from: config.sender_email,
         to: appointment.patient.email,
@@ -577,15 +576,21 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
   return transactionResult;
 };
 
-const cancelAppointment = async (payload: ICancelAppointmentPayload) => {
+const cancelAppointment = async (
+  payload: ICancelAppointmentPayload,
+  user: IRequestUser,
+) => {
   const transactionResult = await prisma.$transaction(async (tx) => {
-    const appointmentId = payload.appointmentId;
     const appointmentExist = await tx.apppointment.findUnique({
       where: {
-        id: appointmentId,
+        id: payload.appointmentId,
+        patient: {
+          email: user.email,
+        },
       },
       include: {
         payment: true,
+        schedule: true,
       },
     });
     if (!appointmentExist) {
@@ -611,54 +616,77 @@ const cancelAppointment = async (payload: ICancelAppointmentPayload) => {
         status: AppointmentStatus.CANCELLED,
       },
     });
-
-    const bkashIdToken = await getBkashIdToken();
-    if (!bkashIdToken) {
-      throw new AppError(
-        httpstatus.BAD_REQUEST,
-        "Bkash Access Token Not Found.",
-      );
-    }
-
-    const BkashRefundResponse = await fetch(
-      `${config.bkash_base_url}/tokenized/checkout/payment/refund`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: bkashIdToken,
-          "X-App-Key": config.bkash_app_key,
-        },
-        body: JSON.stringify({
-          paymentID: appointmentExist.payment?.bkashPaymentId,
-          trxID: appointmentExist.payment?.bkashTrxId,
-          amount: appointmentExist.payment?.amount,
-          sku: "Appointment Cancelled",
-          reason: "Patient Cancel The Appointment.",
-        }),
-      },
-    );
-
-    const bkashRefundResult = await BkashRefundResponse.json();
-
-    const updatePayment = await tx.payment.update({
+    await tx.schedule.update({
       where: {
-        appointmentId: appointmentExist.id,
+        id: appointmentExist.schedule.id,
       },
       data: {
-        refundTrxId: bkashRefundResult.refundTrxID,
-        refundAmount: bkashRefundResult.amount,
-        refundAt: bkashRefundResult.completedTime,
-        refundReason: "Patient Cancel The Appointment.",
-        status: PaymentStatus.REFUNDED,
-        gatewayResponse: bkashRefundResult,
+        availableSlots: { increment: 1 },
       },
     });
 
+    // refund logic here
+    const now = new Date();
+    const startDateTime = appointmentExist.schedule.startDateTime;
+
+    const refundCutOfTime = subHours(startDateTime, 1);
+    const isEligibleForRefund = isBefore(now, refundCutOfTime);
+
+    if (isEligibleForRefund) {
+      const bkashIdToken = await getBkashIdToken();
+      if (!bkashIdToken) {
+        throw new AppError(
+          httpstatus.BAD_REQUEST,
+          "Bkash Access Token Not Found.",
+        );
+      }
+
+      const BkashRefundResponse = await fetch(
+        `${config.bkash_base_url}/tokenized/checkout/payment/refund`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: bkashIdToken,
+            "X-App-Key": config.bkash_app_key,
+          },
+          body: JSON.stringify({
+            paymentID: appointmentExist.payment?.bkashPaymentId,
+            trxID: appointmentExist.payment?.bkashTrxId,
+            amount: appointmentExist.payment?.amount,
+            sku: "Appointment Cancelled",
+            reason: "Patient Cancel The Appointment.",
+          }),
+        },
+      );
+
+      const bkashRefundResult = await BkashRefundResponse.json();
+
+      await tx.payment.update({
+        where: {
+          appointmentId: appointmentExist.id,
+        },
+        data: {
+          refundTrxId: bkashRefundResult.refundTrxID,
+          refundAmount: bkashRefundResult.amount,
+          refundAt: bkashRefundResult.completedTime,
+          refundReason: "Patient Cancel The Appointment.",
+          status: PaymentStatus.REFUNDED,
+          gatewayResponse: bkashRefundResult,
+        },
+      });
+    }
+
+    const newPaymentInfo = await tx.payment.findUnique({
+      where: {
+        appointmentId : appointmentExist.id
+      }
+    })
+
     return {
       appointment: updateAppointment,
-      payment: updatePayment,
+      payment: newPaymentInfo,
     };
   });
 
