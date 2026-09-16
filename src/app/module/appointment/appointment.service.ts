@@ -19,6 +19,11 @@ import {
 } from "./appointment.interface";
 import httpStatus from "http-status";
 import { addMinutes, isBefore, isSameDay } from "date-fns";
+import { format } from "date-fns";
+import ejs from "ejs";
+import { transporter } from "../../lib/nodemailer";
+import path from "node:path";
+import PDFDocument from "pdfkit";
 
 const bookAppointment = async (
   payload: IBookAppointmentPayload,
@@ -299,6 +304,8 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         },
         include: {
           schedule: true,
+          patient: true,
+          doctor: true,
         },
       });
 
@@ -325,7 +332,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
           serialNumber,
         },
       });
-      
+
       const newAvailableSlots = appointment?.schedule.availableSlots - 1;
       await tx.schedule.update({
         where: {
@@ -346,6 +353,189 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
           paidAt: executePaymentResult.paymentExecuteTime,
           gatewayResponse: executePaymentResult,
         },
+      });
+
+      const templatePath = path.join(
+        process.cwd(),
+        "src/app/template/appointmentConfirmed.ejs",
+      );
+
+      const html = await ejs.renderFile(templatePath, {
+        patientName: appointment.patient.name,
+
+        appointmentId: appointment.id,
+
+        serialNumber: appointment.serialNumber,
+
+        doctorName: appointment.doctor.name,
+
+        specialization: appointment.doctor.specialization,
+
+        appointmentDate: format(
+          appointment.schedule.startDateTime,
+          "dd MMMM yyyy",
+        ),
+
+        appointmentTime: `${format(
+          appointment.schedule.startDateTime,
+          "hh:mm a",
+        )} - ${format(appointment.schedule.endDateTime, "hh:mm a")}`,
+
+        amount: appointment.doctor.consultationFee,
+
+        meetingLink: appointment.schedule.meetingLink,
+      });
+
+      const pdfDocument = new PDFDocument({ margin: 50, size: "A4" }); 
+      const pdfChunks: Buffer[] = [];
+
+      pdfDocument.on("data", (chunk: Buffer) => {
+        pdfChunks.push(chunk);
+      });
+
+      const pdfReadyPromise = new Promise<Buffer>((resolve) => {
+        pdfDocument.on("end", () => {
+          resolve(Buffer.concat(pdfChunks));
+        });
+      });
+
+      const PRIMARY_COLOR = "#1A365D"; 
+      const SECONDARY_COLOR = "#4A5568"; 
+      const TEXT_COLOR = "#2D3748"; 
+      const BORDER_COLOR = "#E2E8F0";
+
+      pdfDocument
+        .fillColor(PRIMARY_COLOR)
+        .fontSize(24)
+        .text("PH Healthcare System", {
+          align: "center",
+        });
+
+      pdfDocument
+        .fillColor(SECONDARY_COLOR)
+        .fontSize(12)
+        .text("Appointment Invoice", { align: "center" })
+        .moveDown(1.5);
+
+      pdfDocument
+        .moveTo(50, pdfDocument.y)
+        .lineTo(545, pdfDocument.y)
+        .strokeColor(BORDER_COLOR)
+        .stroke()
+        .moveDown(1.5);
+
+      const topOfSection = pdfDocument.y;
+
+      pdfDocument
+        .fillColor(PRIMARY_COLOR)
+        .fontSize(12)
+        .text("Patient Details", 50, topOfSection, { underline: true })
+        .moveDown(0.5)
+        .fillColor(TEXT_COLOR)
+        .fontSize(10)
+        .text(`Name: ${appointment.patient?.name}`)
+        .text(`Email: ${appointment.patient?.email}`);
+
+      pdfDocument
+        .fillColor(PRIMARY_COLOR)
+        .fontSize(12)
+        .text("Doctor Details", 320, topOfSection, { underline: true })
+        .moveDown(0.5)
+        .fillColor(TEXT_COLOR)
+        .fontSize(10)
+        .text(`Name: ${appointment.doctor?.name}`)
+        .text(`Specialization: ${appointment.doctor?.specialization}`);
+
+      pdfDocument.y = topOfSection + 65;
+      pdfDocument.x = 50;
+
+      pdfDocument
+        .fillColor(PRIMARY_COLOR)
+        .fontSize(12)
+        .text("Schedule & Meeting Info")
+        .moveDown(0.5);
+
+      pdfDocument
+        .fillColor(TEXT_COLOR)
+        .fontSize(10)
+        .text(`Date: ${appointment.schedule.startDateTime.toDateString()}`)
+        .text(`Serial Number: ${serialNumber}`)
+        .text(`Joining Time: ${joiningTime.toString()}`)
+        .fillColor("#3182CE") 
+        .text(`Meeting Link: ${appointment.schedule.meetingLink}`)
+        .moveDown(1.5);
+
+      
+      pdfDocument.rect(50, pdfDocument.y, 495, 20).fill(PRIMARY_COLOR);
+
+      pdfDocument
+        .fillColor("#FFFFFF")
+        .fontSize(10)
+        .text("Payment Description", 60, pdfDocument.y + 5)
+        .text("Details", 320, pdfDocument.y - 10);
+
+      pdfDocument.y += 15; 
+
+      const paymentData = [
+        { label: "Payment Method", value: "bKash" },
+        { label: "Transaction ID", value: executePaymentResult.trxID },
+        { label: "Paid At", value: executePaymentResult.paymentExecuteTime },
+      ];
+
+      paymentData.forEach((row) => {
+        pdfDocument
+          .fillColor(TEXT_COLOR)
+          .text(row.label, 60, pdfDocument.y + 5)
+          .text(row.value, 320, pdfDocument.y - 10);
+
+        pdfDocument.y += 10;
+        pdfDocument
+          .moveTo(50, pdfDocument.y)
+          .lineTo(545, pdfDocument.y)
+          .strokeColor(BORDER_COLOR)
+          .stroke();
+      });
+
+      pdfDocument.moveDown(1);
+      pdfDocument
+        .rect(320, pdfDocument.y, 225, 30)
+        .fillColor("#EDF2F7")
+        .rect(320, pdfDocument.y, 225, 30)
+        .fill();
+
+      pdfDocument
+        .fillColor(PRIMARY_COLOR)
+        .fontSize(11)
+        .text(
+          `Amount Paid: ${executePaymentResult.amount} BDT`,
+          330,
+          pdfDocument.y - 20,
+        );
+
+      pdfDocument
+        .fillColor(SECONDARY_COLOR)
+        .fontSize(9)
+        .text("Thank you for choosing PH Healthcare System!", 50, 720, {
+          align: "center",
+        });
+
+      pdfDocument.end();
+
+    
+      const pdfBuffer = await pdfReadyPromise;
+      
+      await transporter.sendMail({
+        from: config.sender_email,
+        to: appointment.patient.email,
+        subject: "Appointment Confirmed - PH Healthcare System",
+        html,
+        attachments: [
+          {
+            filename: `invoice_${appointment.id || "invoice"}.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
       });
 
       return {

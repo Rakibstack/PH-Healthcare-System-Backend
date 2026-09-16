@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Appointment Confirmed</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fb;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1f2937;
+    }
+
+    .container {
+      width: 100%;
+      padding: 40px 0;
+    }
+
+    .email-wrapper {
+      max-width: 620px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+
+    .header {
+      padding: 28px 32px;
+      text-align: center;
+      background-color: #0f766e;
+      color: #ffffff;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 32px;
+    }
+
+    .success {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .success-icon {
+      width: 52px;
+      height: 52px;
+      line-height: 52px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background-color: #dcfce7;
+      color: #15803d;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .success h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #111827;
+    }
+
+    .success p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .greeting {
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .appointment-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .appointment-title {
+      background-color: #f8fafc;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .details {
+      padding: 18px;
+    }
+
+    .detail-row {
+      display: table;
+      width: 100%;
+      margin-bottom: 13px;
+    }
+
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      display: table-cell;
+      width: 42%;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .value {
+      display: table-cell;
+      width: 58%;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .meeting-box {
+      background-color: #ecfeff;
+      border: 1px solid #a5f3fc;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    .meeting-box h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: #155e75;
+    }
+
+    .meeting-box p {
+      margin: 0 0 14px;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .meeting-link {
+      display: inline-block;
+      padding: 11px 18px;
+      background-color: #0f766e;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .attachment-note {
+      background-color: #f8fafc;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .footer {
+      padding: 22px 32px;
+      background-color: #f8fafc;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+
+    .footer p {
+      margin: 4px 0;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .footer strong {
+      color: #374151;
+    }
+
+    @media only screen and (max-width: 640px) {
+      .container {
+        padding: 15px 0;
+      }
+
+      .email-wrapper {
+        width: 100%;
+        border-radius: 0;
+      }
+
+      .header,
+      .content,
+      .footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .label,
+      .value {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="email-wrapper">
+
+      <!-- Header -->
+      <div class="header">
+        <h1>PH Healthcare System</h1>
+        <p>Online Healthcare & Consultation Platform</p>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+        <!-- Success -->
+        <div class="success">
+          <div class="success-icon">✓</div>
+
+          <h2>Appointment Confirmed</h2>
+
+          <p>
+            Your appointment has been successfully confirmed.
+          </p>
+        </div>
+
+        <!-- Greeting -->
+        <div class="greeting">
+          Hello <strong><%= patientName %></strong>,
+          <br /><br />
+
+          Your payment has been successfully processed and your
+          appointment with the doctor has been confirmed.
+          Please keep this email and the attached PDF for your records.
+        </div>
+
+        <!-- Appointment Details -->
+        <div class="appointment-card">
+
+          <div class="appointment-title">
+            Appointment Details
+          </div>
+
+          <div class="details">
+
+            <div class="detail-row">
+              <span class="label">Appointment ID</span>
+              <span class="value"><%= appointmentId %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Serial Number</span>
+              <span class="value"><%= serialNumber %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Doctor</span>
+              <span class="value"><%= doctorName %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Specialization</span>
+              <span class="value"><%= specialization %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Date</span>
+              <span class="value"><%= appointmentDate %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Time</span>
+              <span class="value"><%= appointmentTime %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Payment Amount</span>
+              <span class="value">৳ <%= amount %></span>
+            </div>
+
+            <div class="detail-row">
+              <span class="label">Payment Status</span>
+              <span class="value">Paid</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Meeting -->
+        <div class="meeting-box">
+
+          <h3>Join Your Consultation</h3>
+
+          <p>
+            Please join the consultation using the meeting link below
+            at your scheduled appointment time.
+          </p>
+
+          <a
+            href="<%= meetingLink %>"
+            class="meeting-link"
+          >
+            Join Consultation
+          </a>
+
+        </div>
+
+        <!-- PDF Attachment -->
+        <div class="attachment-note">
+
+          📄 <strong>Appointment Confirmation PDF</strong>
+
+          <br />
+
+          A PDF containing your appointment and payment details
+          has been attached to this email for your records.
+
+        </div>
+
+        <div class="greeting">
+
+          Please arrive on time and keep your appointment details
+          available before joining the consultation.
+
+          <br /><br />
+
+          Thank you for choosing <strong>PH Healthcare System</strong>.
+          We wish you a smooth and successful consultation.
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+
+        <p>
+          <strong>PH Healthcare System</strong>
+        </p>
+
+        <p>
+          This is an automated email. Please do not reply directly to this email.
+        </p>
+
+        <p>
+          © <%= new Date().getFullYear() %> PH Healthcare System. All rights reserved.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
