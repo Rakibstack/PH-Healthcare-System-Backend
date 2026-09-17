@@ -48,4 +48,17 @@ router.get(
 	appointmentController.getDoctorAppointments,
 );
 
+router.get(
+	"/all-appointments",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	appointmentController.getAllAppointments,
+);
+
+router.get(
+	"/:appointmentId",
+	auth(Role.PATIENT, Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),
+	appointmentController.getSingleAppointment,
+);
+
+
 export const appointmentRoutes = router;

@@ -3,6 +3,7 @@
 import {
   AppointmentStatus,
   PaymentStatus,
+  Role,
   ScheduleStatus,
 } from "../../../generated/prisma/enums";
 import AppError from "../../utils/AppError";
@@ -896,6 +897,112 @@ const getDoctorAppointments = async (query: IQuery, user: requestUser) => {
 	};
 }
 
+//admin super admin
+const getAllAppointments = async (query : IQuery) => {
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
+	const sortBy = query.sortBy ? query.sortBy : "createdAt";
+	const sortOrder = query.sortOrder ? query.sortOrder : "desc"
+
+	const andConditions: ApppointmentWhereInput[] = [];
+
+	if (query.status) {
+		andConditions.push({ status: query.status });
+	}
+
+	if (query.doctorId) {
+		andConditions.push({ doctorId: query.doctorId });
+	}
+
+	if (query.patientId) {
+		andConditions.push({ patientId: query.patientId });
+	}
+
+	if(query.doctorEmail){
+		andConditions.push({
+			doctor : {
+				email : query.doctorEmail
+			}
+		})
+	}
+	if(query.patientEmail){
+		andConditions.push({
+			patient : {
+				email : query.patientEmail
+			}
+		})
+	}
+
+	const appointments = await prisma.apppointment.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { [sortBy] : sortOrder },
+		include: {
+			patient: { select: { id: true, name: true, email: true } },
+			doctor: { select: { id: true, name: true, specialization: true } },
+			schedule: true,
+			payment: true,
+		},
+	});
+
+	const total = await prisma.apppointment.count({
+		where: { AND: andConditions },
+	});
+
+	return {
+		data: appointments,
+		meta: {
+			page,
+			limit,
+			total,
+			totalPages: Math.ceil(total / limit),
+		},
+	};
+
+
+}
+
+// for all loggedin user
+const getSingleAppointment = async (appointmentId : string, user : requestUser) => {
+	const appointment = await prisma.apppointment.findUnique({
+		where: { id: appointmentId },
+		include: {
+			patient: { select: { id: true, name: true, email: true, userId: true } },
+			doctor: {
+				select: { id: true, name: true, specialization: true, userId: true },
+			},
+			schedule: true,
+			payment: true,
+		},
+	});
+
+	if (!appointment) {
+		throw new AppError(httpStatus.NOT_FOUND, "Appointment Not Found");
+	}
+
+	if(user.role === Role.PATIENT){
+		if(appointment.patient.userId !== user.userId){
+			throw new AppError(
+				httpStatus.FORBIDDEN,
+				"You Are Not Allowed To View This Appointment",
+			);
+		}
+	}
+	if(user.role === Role.DOCTOR){
+		if(appointment.doctor.userId !== user.userId){
+			throw new AppError(
+				httpStatus.FORBIDDEN,
+				"You Are Not Allowed To View This Appointment",
+			);
+		}
+	}
+
+	return appointment
+}
+
+
 
 export const appointmentService = {
   bookAppointment,
@@ -904,5 +1011,7 @@ export const appointmentService = {
   cancelAppointment,
   updateAppointmentStatus,
   getMyAppointments,
-  getDoctorAppointments
+  getDoctorAppointments,
+  getAllAppointments,
+  getSingleAppointment
 };
