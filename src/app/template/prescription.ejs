@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Your Prescription</title>
+</head>
+
+<body
+  style="
+    margin:0;
+    padding:0;
+    background:#f1f5f9;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#1f2937;
+  "
+>
+
+  <div
+    style="
+      max-width:620px;
+      margin:0 auto;
+      padding:30px 15px;
+    "
+  >
+
+    <!-- Main Card -->
+
+    <div
+      style="
+        background:#ffffff;
+        border:1px solid #e2e8f0;
+        border-radius:12px;
+        overflow:hidden;
+      "
+    >
+
+      <!-- Header -->
+
+      <div
+        style="
+          background:#0f766e;
+          padding:25px 30px;
+          color:#ffffff;
+        "
+      >
+
+        <div
+          style="
+            font-size:23px;
+            font-weight:bold;
+          "
+        >
+          PH Healthcare System
+        </div>
+
+        <div
+          style="
+            margin-top:5px;
+            font-size:13px;
+            opacity:.9;
+          "
+        >
+          Digital Healthcare & Telemedicine Platform
+        </div>
+
+      </div>
+
+
+      <!-- Content -->
+
+      <div style="padding:30px;">
+
+        <div
+          style="
+            font-size:24px;
+            font-weight:bold;
+            color:#111827;
+          "
+        >
+          Your Prescription is Ready
+        </div>
+
+
+        <p
+          style="
+            font-size:15px;
+            line-height:1.7;
+            margin-top:18px;
+          "
+        >
+          Hello
+          <strong><%= patientName %></strong>,
+        </p>
+
+
+        <p
+          style="
+            font-size:14px;
+            line-height:1.7;
+            color:#475569;
+          "
+        >
+          Your consultation with
+          <strong>Dr. <%= doctorName %></strong>
+          has been completed successfully.
+        </p>
+
+
+        <p
+          style="
+            font-size:14px;
+            line-height:1.7;
+            color:#475569;
+          "
+        >
+          Your digital prescription has been generated and
+          is attached to this email as a PDF.
+        </p>
+
+
+        <!-- Prescription Details -->
+
+        <div
+          style="
+            margin-top:25px;
+            padding:20px;
+            background:#f8fafc;
+            border:1px solid #e2e8f0;
+            border-radius:8px;
+          "
+        >
+
+          <div
+            style="
+              font-size:12px;
+              font-weight:bold;
+              color:#0f766e;
+              margin-bottom:15px;
+            "
+          >
+            PRESCRIPTION DETAILS
+          </div>
+
+
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              font-size:13px;
+            "
+          >
+
+            <tr>
+
+              <td
+                style="
+                  padding:7px 0;
+                  color:#64748b;
+                "
+              >
+                Prescription No.
+              </td>
+
+              <td
+                style="
+                  padding:7px 0;
+                  text-align:right;
+                  font-weight:bold;
+                  color:#111827;
+                "
+              >
+                <%= prescriptionNumber %>
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td
+                style="
+                  padding:7px 0;
+                  color:#64748b;
+                "
+              >
+                Doctor
+              </td>
+
+              <td
+                style="
+                  padding:7px 0;
+                  text-align:right;
+                  font-weight:bold;
+                  color:#111827;
+                "
+              >
+                Dr. <%= doctorName %>
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td
+                style="
+                  padding:7px 0;
+                  color:#64748b;
+                "
+              >
+                Specialization
+              </td>
+
+              <td
+                style="
+                  padding:7px 0;
+                  text-align:right;
+                  font-weight:bold;
+                  color:#111827;
+                "
+              >
+                <%= specialization %>
+              </td>
+
+            </tr>
+
+
+            <tr>
+
+              <td
+                style="
+                  padding:7px 0;
+                  color:#64748b;
+                "
+              >
+                Appointment Date
+              </td>
+
+              <td
+                style="
+                  padding:7px 0;
+                  text-align:right;
+                  font-weight:bold;
+                  color:#111827;
+                "
+              >
+                <%= appointmentDate %>
+              </td>
+
+            </tr>
+
+          </table>
+
+        </div>
+
+
+        <!-- Attachment Notice -->
+
+        <div
+          style="
+            margin-top:22px;
+            padding:16px;
+            background:#f0fdfa;
+            border-left:4px solid #0f766e;
+            font-size:13px;
+            line-height:1.6;
+            color:#334155;
+          "
+        >
+
+          <strong>Prescription PDF attached</strong>
+
+          <br />
+
+          Please keep the attached prescription for
+          your medical records.
+
+        </div>
+
+
+        <!-- Important Note -->
+
+        <div
+          style="
+            margin-top:22px;
+            font-size:12px;
+            line-height:1.7;
+            color:#64748b;
+          "
+        >
+
+          Please follow your doctor's instructions and
+          consult your healthcare provider if you have
+          any questions regarding your prescription.
+
+        </div>
+
+
+        <p
+          style="
+            margin-top:28px;
+            font-size:14px;
+            line-height:1.6;
+          "
+        >
+          Regards,<br />
+
+          <strong>
+            PH Healthcare System
+          </strong>
+
+        </p>
+
+      </div>
+
+
+      <!-- Footer -->
+
+      <div
+        style="
+          padding:18px 30px;
+          background:#f8fafc;
+          border-top:1px solid #e2e8f0;
+          text-align:center;
+        "
+      >
+
+        <div
+          style="
+            font-size:11px;
+            color:#94a3b8;
+          "
+        >
+          This is an automated email from PH Healthcare System.
+        </div>
+
+        <div
+          style="
+            margin-top:5px;
+            font-size:11px;
+            color:#94a3b8;
+          "
+        >
+          © <%= year %> PH Healthcare System
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
