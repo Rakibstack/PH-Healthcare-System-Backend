@@ -68,11 +68,47 @@ const updateAppointmentStatus = catchAsync(
 		});
 	},
 );
+const getMyAppointments = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user!;
+
+	const { data, meta } = await appointmentService.getMyAppointments(
+		req.query,
+		user,
+	);
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Appointments Retrieved Successfully",
+		data,
+		meta,
+	});
+});
+
+const getDoctorAppointments = catchAsync(
+	async (req: Request, res: Response) => {
+		const user = req.user!;
+
+		const { data, meta } = await appointmentService.getDoctorAppointments(
+			req.query,
+			user,
+		);
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Appointments Retrieved Successfully",
+			data,
+			meta,
+		});
+	},
+);
 
 export const appointmentController = {
   bookAppointment,
   payAppointment,
   bookAppointmentCallback,
   cancelAppointment,
-  updateAppointmentStatus
+  updateAppointmentStatus,
+  getMyAppointments,
+  getDoctorAppointments
+  
 };

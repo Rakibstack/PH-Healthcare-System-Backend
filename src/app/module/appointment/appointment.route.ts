@@ -30,10 +30,22 @@ router.get(
 );
 
 router.patch(
-  "/update-appointment-status",
-  validationRequest(UpdateAppointmentStatusValidationZodSchema),
-  auth(Role.DOCTOR),
-  appointmentController.updateAppointmentStatus,
+	"/update-status/:appointmentId",
+	auth(Role.DOCTOR),
+	validationRequest(UpdateAppointmentStatusValidationZodSchema),
+	appointmentController.updateAppointmentStatus,
+);
+
+router.get(
+	"/my-appointments",
+	auth(Role.PATIENT),
+	appointmentController.getMyAppointments,
+);
+
+router.get(
+	"/doctor-appointments",
+	auth(Role.DOCTOR),
+	appointmentController.getDoctorAppointments,
 );
 
 export const appointmentRoutes = router;
