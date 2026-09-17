@@ -28,3 +28,10 @@ export interface IApproveDoctorPayload {
 
 }
 
+export interface IUpdateDoctorProfilePayload {
+    address?: string;
+    bio?: string;
+    consultationFee?: number;
+    contactNumber?: string;
+}
+
