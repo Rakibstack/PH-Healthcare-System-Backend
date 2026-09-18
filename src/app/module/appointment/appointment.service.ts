@@ -370,7 +370,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
 
         appointmentId: appointment.id,
 
-        serialNumber: appointment.serialNumber,
+        serialNumber:serialNumber,
 
         doctorName: appointment.doctor.name,
 
@@ -575,6 +575,9 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         redirectUrl: `${config.frontend_url}/dashboard/my-appointments?error=payment_failed`,
       };
     }
+  }, {
+    maxWait: 10000,
+    timeout: 15000,
   });
 
   return transactionResult;
@@ -618,6 +621,7 @@ const cancelAppointment = async (
       },
       data: {
         status: AppointmentStatus.CANCELLED,
+        joiningTime : null,
       },
     });
     await tx.schedule.update({

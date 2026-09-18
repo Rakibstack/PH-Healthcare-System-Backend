@@ -1,178 +1,119 @@
+
 # 🏥 PH Healthcare System
 
-A full-stack healthcare platform that connects patients with doctors for online consultations. Patients can discover doctors, book available consultation slots, make secure payments, attend video consultations, and receive digital prescriptions.
+A backend-focused healthcare management and telemedicine platform designed to simplify the complete online doctor consultation workflow — from doctor onboarding and appointment booking to secure payment and digital prescription delivery.
 
-The platform also provides administrative tools for managing doctors, patients, and platform users.
+## 🎯 What I Built
 
----
+PH Healthcare System provides a structured platform where patients can:
 
-## ✨ Core Features
+- Register and verify their account through email OTP
+- Find verified doctors and view available consultation schedules
+- Book available 20-minute appointment slots
+- Pay consultation fees through bKash
+- Join scheduled online consultations
+- Receive digital prescriptions after consultation
 
-* 🔐 Secure authentication with JWT & HTTP-only cookies
-* 📧 Email OTP verification
-* 🔑 Forgot, reset, change & set password
-* 🔵 Google authentication for patients
-* 👥 Role-based access control (RBAC)
-* 🩺 Doctor application & approval system
-* 📅 Doctor schedule & 20-minute appointment slots
-* 📋 Appointment booking & management
-* 💳 Stripe payment integration
-* 🔄 Appointment cancellation & refund system
-* 💊 Digital prescription management
-* 📄 Invoice & prescription PDF generation
-* 📧 Automated email notifications
-* 🛡️ Admin & Super Admin management
+Doctors can apply for verification, publish consultation schedules, manage appointments, and provide digital prescriptions.
 
----
+Admins manage doctor verification, user accounts, and platform operations.
 
-## 👥 User Roles
-
-The system supports four roles:
-
-| Role            | Responsibilities                                                                                   |
-| --------------- | -------------------------------------------------------------------------------------------------- |
-| **Patient**     | Find doctors, book appointments, make payments, attend consultations, receive prescriptions        |
-| **Doctor**      | Manage profile, create schedules, handle appointments, conduct consultations, create prescriptions |
-| **Admin**       | Manage doctors and patients, approve doctor applications, create admins                            |
-| **Super Admin** | Full platform management, including Admin/Super Admin management                                   |
-
----
-
-## 🔄 Main Workflow
-
-### Patient
+## 🔄 Core Workflow
 
 ```text
-Register / Login
-      ↓
-Find Doctor
-      ↓
-View Available Schedule
-      ↓
-Select Slot
-      ↓
-Make Payment
-      ↓
-Appointment Confirmed
-      ↓
-Join Consultation
-      ↓
-Receive Prescription
-```
-
-### Doctor
-
-```text
-Apply as Doctor
-      ↓
+Patient Registration
+        ↓
 Email Verification
-      ↓
-Admin Approval
-      ↓
-Doctor Account Activated
-      ↓
-Create Schedule
-      ↓
-Manage Appointments
-      ↓
-Complete Consultation
-      ↓
-Create Prescription
-```
+        ↓
+Find Verified Doctor
+        ↓
+Book Available Slot
+        ↓
+bKash Payment
+        ↓
+Appointment Confirmation
+        ↓
+Online Consultation
+        ↓
+Digital Prescription
+🧩 Problems Solved
 
----
+The system addresses several real-world healthcare workflow challenges:
 
-## 🛠️ Tech Stack
+Manual doctor verification → Admin-controlled doctor approval workflow
+Unstructured appointment scheduling → Date-based schedules with automatically generated 20-minute slots
+Payment uncertainty → Payment verification before confirming appointments
+Double booking risk → Transaction-based appointment and slot management
+Manual prescription delivery → PDF prescription generation and email delivery
+Account security issues → OTP verification, JWT authentication, HTTP-only cookies, and role-based access control
+⚙️ Key Features
+JWT Authentication with Access & Refresh Tokens
+HTTP-only Cookie Based Authentication
+Email OTP Verification
+Google Authentication
+Role-Based Access Control (RBAC)
+Doctor Application & Approval System
+Doctor Schedule & Slot Management
+Appointment Booking & Cancellation
+bKash Payment Integration
+Payment Verification & Refund Workflow
+Digital Prescription PDF Generation
+Email Notifications
+Cloudinary File Management
+Redis for OTP & Token Caching
+Admin & Super Admin Management
+Patient & Doctor Analytics
+Automated Cron Jobs for Data Cleanup
+🛠️ Tech Stack
 
-### Frontend
+Backend
 
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
+Node.js
+Express.js
+TypeScript
 
-### Backend
+Database
 
-* Node.js
-* Express.js
-* TypeScript
-* Zod
+PostgreSQL
+Prisma ORM
 
-### Database
+Authentication & Security
 
-* PostgreSQL
-* Prisma ORM
+JWT
+bcrypt
+Zod
+Google OAuth
 
-### Authentication & Services
+Infrastructure & Services
 
-* JWT
-* Google OAuth
-* Stripe
-* Email Service
-* PDF Generation
+Redis
+Cloudinary
+bKash Payment Gateway
+Nodemailer
+EJS
+PDFKit
+Node-Cron
+📈 Result
 
----
+This project helped transform a basic healthcare API into a more realistic backend system with:
 
-### Configure environment variables
+Secure authentication and authorization
+Real-world payment processing
+Transaction-safe appointment booking
+Automated scheduling and cleanup workflows
+Digital prescription management
+Role-specific healthcare operations
 
-Create a `.env` file and configure the required environment variables.
+The main goal was to practice designing backend systems around real business rules, data consistency, security, and automation rather than building only CRUD-based APIs.
 
-```env
-DATABASE_URL=
+🚀 Project Status
 
-JWT_ACCESS_SECRET=
-JWT_REFRESH_SECRET=
+In Development
 
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+Built as an industry-oriented backend project to strengthen practical experience with scalable backend architecture, business logic, integrations, and real-world workflows.
 
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+👨‍💻 Developer
 
-EMAIL_USER=
-EMAIL_PASSWORD=
+Rakibul Hassan Rakib
 
-FRONTEND_URL=
-```
-
-### Run Prisma
-
-```bash
-npx prisma generate
-npx prisma migrate dev
-```
-
-### Start development server
-
-```bash
-npm run dev
-```
-
----
-
-## 📌 Project Status
-
-🚧 **Currently in Development**
-
-This project is being developed with a focus on production-oriented backend architecture, secure authentication, database design, payment processing, scheduling, and real-world business logic.
-
----
-
-## 🎯 Goal
-
-The goal of this project is to build a scalable healthcare platform while practicing real-world full-stack engineering concepts such as:
-
-* Clean & modular architecture
-* Secure authentication & authorization
-* Database design & transactions
-* Payment integration
-* Appointment scheduling
-* Business rule enforcement
-* Error handling
-* Production-ready development practices
-
----
-
-## 👨‍💻 Developer
-
-**Rakib** — Full-Stack Web Developer
+Full-Stack Web Developer

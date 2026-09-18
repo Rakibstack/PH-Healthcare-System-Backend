@@ -478,12 +478,12 @@ const getAvailableDoctorByTodaysSchedule = async (query: IQuery) => {
 			name: true,
 			specialization: true,
 			licenseNumber: true,
-			qualifications: true,
+      qualification: true,
 			experienceYears: true,
 			bio: true,
 			consultationFee: true,
 			createdAt: true,
-			schedules: {
+			schedule: {
 				where: {
 					isDeleted: false,
 					status: ScheduleStatus.PUBLISHED,
@@ -567,8 +567,8 @@ const getAllDoctorsListPublic = async (query: IQuery) => {
 			name: true,
 			specialization: true,
 			licenseNumber: true,
-			qualifications: true,
 			experienceYears: true,
+      qualification : true,
 			bio: true,
 			consultationFee: true,
 			createdAt: true,
@@ -603,7 +603,7 @@ const getSingleDoctorPublicProfile = async (doctorId: string) => {
 			name: true,
 			specialization: true,
 			licenseNumber: true,
-			qualifications: true,
+			qualification: true,
 			experienceYears: true,
 			bio: true,
 			consultationFee: true,

@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/correctness/noUnusedImports: <explanation> */
 /** biome-ignore-all assist/source/organizeImports: <explanation> */
-import { Role } from "../../generated/prisma/enums";
+import { DoctorVerificationStatus, Role } from "../../generated/prisma/enums";
 import config from "../config";
 import { prisma } from "../lib/prisma";
 import bcrypt from "bcryptjs";
@@ -137,7 +137,8 @@ export const seedTesterDoctor = async () => {
             specialization : 'Neurology',
             experienceYears : 5,
             licenseNumber : "DMCBC0000",
-            qualification : 'MBBS'
+            qualification : 'MBBS',
+            verificationStatus : DoctorVerificationStatus.VERIFIED
           },
         },
       },

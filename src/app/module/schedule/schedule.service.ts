@@ -72,11 +72,10 @@ const createSchedule = async (
   }
 
   const durationInMinutes = differenceInMinutes(
-    payload.startDateTime,
     payload.endDateTime,
+    payload.startDateTime
   );
 
- 
   const MIN_SCHEDULE_MINUTES = 3 * 60;
   const MAX_SCHEDULE_MINUTES = 8 * 60;
   const MINUTES_PER_SLOT = 20;
@@ -422,7 +421,6 @@ const updateSchedule = async (
     );
   }
 
-  // 13. Update schedule
   const updatedSchedule = await prisma.schedule.update({
     where: {
       id: schedule.id,

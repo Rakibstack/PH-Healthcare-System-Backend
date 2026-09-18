@@ -8,7 +8,6 @@ import {
   UserStatus,
 } from "../../../generated/prisma/enums";
 import config from "../../config";
-import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import type {
   IForgotPasswordPayload,
@@ -28,7 +27,8 @@ import { transporter } from "../../lib/nodemailer";
 import ejs from "ejs";
 import path from "path";
 import AppError from "../../utils/AppError";
-import httpstatus from "http-status"
+import httpstatus from "http-status";
+import { prisma } from "../../lib/prisma";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
   const { name, password } = payload;
@@ -39,10 +39,16 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
   });
 
   if (isUserExists) {
-    throw new AppError(httpstatus.CONFLICT, "User with this email already exists");
+    throw new AppError(
+      httpstatus.CONFLICT,
+      "User with this email already exists",
+    );
   }
 
-  const hashedPassword = await bcrypt.hash(password,Number(config.bcrypt_salt_rounds));
+  const hashedPassword = await bcrypt.hash(
+    password,
+    Number(config.bcrypt_salt_rounds),
+  );
 
   const expiresInSeconds = 5 * 60;
   const otpKey = `patient-register-otp:${email}`;
@@ -153,7 +159,7 @@ const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
     subject: "Welcome to PH Healthcare System",
     html,
   });
-  
+
   const { patient, ...user } = createdUser;
   const jwtPayload = {
     userId: user.id,
@@ -183,15 +189,16 @@ const verifyPatientEmail = async (payload: IVerifyPatientEmailPayload) => {
 };
 
 const loginUser = async (payload: ILoginUserPayload) => {
+
   const { password } = payload;
   const email = payload.email.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email : payload.email },
   });
 
   if (!user) {
-    throw new AppError(httpstatus.NOT_FOUND,"User not found");
+    throw new AppError(httpstatus.NOT_FOUND, "User not found");
   }
 
   if (user.status === UserStatus.BLOCKED) {
@@ -246,11 +253,17 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
     googleIdTokenPayload = ticket.getPayload();
   } catch (error) {
     console.log("Google Id Token Varified Failed", error);
-    throw new AppError(httpstatus.UNAUTHORIZED, "Invalid Or Expired Google Id Token");
+    throw new AppError(
+      httpstatus.UNAUTHORIZED,
+      "Invalid Or Expired Google Id Token",
+    );
   }
 
   if (!googleIdTokenPayload) {
-    throw new AppError(httpstatus.UNAUTHORIZED, "Invalid Or Expired Google Id Token");
+    throw new AppError(
+      httpstatus.UNAUTHORIZED,
+      "Invalid Or Expired Google Id Token",
+    );
   }
 
   if (!googleIdTokenPayload.email) {
@@ -401,7 +414,10 @@ const refreshToken = async (token: string) => {
   });
 
   if (!user || user.isDeleted || user.status !== UserStatus.ACTIVE) {
-    throw new AppError(httpstatus.UNAUTHORIZED, "User is inactive or not found");
+    throw new AppError(
+      httpstatus.UNAUTHORIZED,
+      "User is inactive or not found",
+    );
   }
 
   const jwtPayload = {
